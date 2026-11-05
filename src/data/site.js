@@ -41,61 +41,14 @@ export const ROOM = {
     ["Bath", "2 toilets, 2 shower rooms"],
     ["Cooling", "Fans only. At 816 m, you won't need aircon"],
   ],
-  // Lantern scenes for the Rooms section: hotspots are what's visible in each photo (x/y in %).
-  scenes: [
-    {
-      name: "Canopy beds",
-      src: "/img/dsc04801.webp",
-      alt: "Queen beds under driftwood canopies, a stone column and the vanity by the window",
-      spots: [
-        { x: 56, y: 52, label: "Queen beds under driftwood canopies" },
-        { x: 37, y: 30, label: "Stone columns, built by hand" },
-        { x: 9, y: 16, label: "Edison bulbs over the vanity" },
-        { x: 8, y: 58, label: "Vanity by the window" },
-      ],
-    },
-    {
-      name: "The Beatitude wall",
-      src: "/img/mountainviewroombedzoomin-1.webp",
-      alt: "Queen bed against a crimson wall painted with Matthew 5:4",
-      spots: [
-        { x: 78, y: 26, label: "“Blessed are those who mourn…” Matthew 5:4" },
-        { x: 8, y: 45, label: "Hand-built ladder up to the bunks" },
-        { x: 64, y: 62, label: "Queen bed, fresh white linen" },
-      ],
-    },
-    {
-      name: "Bunks up top",
-      src: "/img/mountainroomviewbunkbedview.webp",
-      alt: "View from the upper bunks over the rail to the living area and windows",
-      spots: [
-        { x: 12, y: 68, label: "4 single bunks up top" },
-        { x: 79, y: 40, label: "Mountain view from every window" },
-        { x: 42, y: 83, label: "Hand-cut timber rails" },
-        { x: 75, y: 76, label: "Reading nook below" },
-      ],
-    },
-    {
-      name: "Living room",
-      src: "/img/mountainviewroomlivingroom-1.webp",
-      alt: "Red sofa by tall curtained windows, a sunburst clock and bookshelves",
-      spots: [
-        { x: 78, y: 70, label: "A red sofa for slow afternoons" },
-        { x: 14, y: 20, label: "Sunburst clock" },
-        { x: 75, y: 30, label: "Fans only: it's cool at 816 m" },
-        { x: 46, y: 22, label: "Shelves of books and photos" },
-      ],
-    },
-    {
-      name: "Bath",
-      src: "/img/mountainviewroombathroomsetup.webp",
-      alt: "Twin basins under a window, a moon mirror and timber doors to the showers",
-      spots: [
-        { x: 12, y: 64, label: "Twin basins under the window" },
-        { x: 6, y: 22, label: "A moon of a mirror" },
-        { x: 28, y: 42, label: "2 toilets, 2 hot & cold showers" },
-      ],
-    },
+  // Postcards for the Rooms section: a room photo on the front, a note about it on the back.
+  postcards: [
+    { name: "Canopy beds", src: "/img/dsc04801.webp", note: "Queen beds under driftwood canopies. Four in each room, two to a bed." },
+    { name: "The Beatitude wall", src: "/img/mountainviewroombedzoomin-1.webp", note: "The wall over the bed reads: Blessed are those who mourn, for they will be comforted." },
+    { name: "Bunks up top", src: "/img/mountainroomviewbunkbedview.webp", note: "Four single bunks up a hand-built ladder, looking out over the rail." },
+    { name: "Living room", src: "/img/mountainviewroomlivingroom-1.webp", note: "A red sofa and windows full of mountain. Fans only: it's cool at 816 m." },
+    { name: "Bath", src: "/img/mountainviewroombathroomsetup.webp", note: "Two toilets, two hot & cold showers. Shampoo, soap & hair dryers waiting." },
+    { name: "The arched door", src: "/img/mountainviewroomlivingroom.webp", note: "48 m² each, two rooms. 12 guests per room, 14 with extra beds." },
   ],
   photos: [
     { src: "/img/mountainviewroombeds-2.webp", alt: "Canopy queen beds and bunks under a stone column" },
