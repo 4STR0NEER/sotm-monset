@@ -1,0 +1,81 @@
+@import "tailwindcss";
+@import "@fontsource-variable/newsreader/wght-italic.css";
+@import "@fontsource-variable/newsreader/wght.css";
+@import "@fontsource-variable/hanken-grotesk/wght.css";
+@import "@fontsource/big-shoulders-display/600";
+@import "@fontsource/big-shoulders-display/700";
+@import "lenis/dist/lenis.css";
+
+/* Palette pulled from the resort itself: the logo's pine, night over the valley,
+   fog, the string lights on the deck, the wood, and the crimson Beatitude walls. */
+@theme {
+  --color-pine: #21503a;
+  --color-pine-deep: #163828;
+  --color-night: #0d1712;
+  --color-mist: #eef0e9;
+  --color-fog: #dde3da;
+  --color-moss: #6c7f63;
+  --color-lantern: #e9a650;
+  --color-ember: #c8642c;
+  --color-wood: #6e4428;
+  --color-crimson: #8c2036;
+
+  --font-display: "Newsreader Variable", Georgia, serif;
+  --font-sans: "Hanken Grotesk Variable", system-ui, sans-serif;
+  --font-stamp: "Big Shoulders Display", "Arial Narrow", sans-serif;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+html { background: var(--color-night); }
+body {
+  background: var(--color-mist);
+  color: var(--color-night);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+::selection { background: var(--color-lantern); color: var(--color-night); }
+
+.stamp { font-family: var(--font-stamp); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 600; }
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* The logo is a green PNG; as a mask it can take any colour. */
+.logo-mask {
+  background: currentColor;
+  -webkit-mask: url(/logo.png) center / contain no-repeat;
+  mask: url(/logo.png) center / contain no-repeat;
+  aspect-ratio: 600 / 760;
+}
+
+/* Film grain over the dark sections, so flat greens don't band. */
+.grain::after {
+  content: "";
+  position: absolute; inset: 0; pointer-events: none;
+  opacity: 0.08; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+:focus-visible { outline: 2px solid var(--color-lantern); outline-offset: 3px; border-radius: 4px; }
+
+/* Page changes cross-fade with a fog wipe (see lib/router.jsx). */
+::view-transition-old(root) { animation: 280ms var(--ease-out) both vt-out; }
+::view-transition-new(root) { animation: 520ms var(--ease-out) 80ms both vt-in; }
+@keyframes vt-out { to { opacity: 0; filter: blur(6px); transform: translateY(-12px); } }
+@keyframes vt-in { from { opacity: 0; filter: blur(8px); transform: translateY(18px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+}
+
+@keyframes marquee { to { transform: translateX(-100%); } }
+
+/* FAQ: native <details>, opening and closing animate height via ::details-content (instant in older browsers) */
+.faq summary { list-style: none; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq { interpolate-size: allow-keywords; }
+.faq::details-content { height: 0; overflow: clip; transition: height 360ms var(--ease-out), content-visibility 360ms allow-discrete; }
+.faq[open]::details-content { height: auto; }
+.faq .plus { transition: transform 260ms var(--ease-out); }
+.faq[open] .plus { transform: rotate(45deg); }
