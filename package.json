@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "images": "node scripts/images.mjs",
-    "check": "node src/lib/pricing.check.mjs"
+    "check": "node src/lib/pricing.check.mjs && node src/lib/stats.check.mjs"
   },
   "dependencies": {
     "@fontsource-variable/hanken-grotesk": "^5.3.0",
