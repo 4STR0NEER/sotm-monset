@@ -61,22 +61,12 @@ const DEMO = [
 ];
 
 const STATUS = {
-  "on-time": {
-    label: "On time",
-    tone: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
-  },
-  "gate-change": {
-    label: "Gate change",
-    tone: "bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400",
-  },
-  delayed: {
-    label: "Delayed",
-    tone: "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400",
-  },
-  boarding: {
-    label: "Boarding",
-    tone: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400",
-  },
+  requested: { label: "Requested", tone: "bg-lantern/20 text-wood" },
+  confirmed: { label: "Confirmed", tone: "bg-pine/10 text-pine" },
+  "on-time": { label: "On time", tone: "bg-pine/10 text-pine" },
+  "gate-change": { label: "Gate change", tone: "bg-lantern/20 text-wood" },
+  delayed: { label: "Delayed", tone: "bg-crimson/10 text-crimson" },
+  boarding: { label: "Boarding", tone: "bg-pine/10 text-pine" },
 };
 
 /** Remembers the value before the last change, so it can sit struck under the new one. */
@@ -147,12 +137,12 @@ function Field({
   const changed = previous !== value;
   return (
     <div className="min-w-0">
-      <p className="text-[11px] text-zinc-500 dark:text-zinc-400">{label}</p>
+      <p className="text-[11px] text-night/55">{label}</p>
       <Flap
         className={cn(
-          "font-semibold text-zinc-900 tabular-nums tracking-tight transition-colors duration-300 ease-out dark:text-zinc-50",
+          "font-semibold text-pine-deep tabular-nums tracking-tight transition-colors duration-300 ease-out",
           large ? "text-xl" : "text-base",
-          changed && "text-orange-600 dark:text-orange-400"
+          changed && "text-ember"
         )}
         reduceMotion={reduceMotion}
         value={value}
@@ -162,7 +152,7 @@ function Field({
           {changed && (
             <motion.p
               animate={{ opacity: 1, y: 0 }}
-              className="text-[11px] text-zinc-400 tabular-nums line-through decoration-zinc-400/70 dark:text-zinc-500"
+              className="text-[11px] text-night/40 tabular-nums line-through decoration-night/30"
               exit={{ opacity: 0 }}
               initial={{ opacity: 0, y: -4 }}
               transition={{
@@ -201,7 +191,7 @@ function Barcode({
   return (
     <svg
       aria-hidden="true"
-      className="h-10 w-full text-zinc-900 dark:text-zinc-100"
+      className="h-10 w-full text-pine-deep"
       preserveAspectRatio="none"
       viewBox="0 0 200 40"
     >
@@ -217,9 +207,13 @@ function Barcode({
  * only the characters that moved roll over, the new value turns orange, and
  * the old one stays underneath, struck through, so you can see what changed.
  */
+// Adapted for SOTM: the 4 fields, the footnote, the passenger label and the icon come from props,
+// so it can be a "mountain pass" for a booking instead of a flight.
 export default function BoardingPass({
   flight,
-  className
+  className,
+  Icon = Plane,
+  passengerLabel = "Passenger"
 }) {
   const [step, setStep] = useState(0);
   const reduceMotion = Boolean(useReducedMotion());
@@ -262,7 +256,7 @@ export default function BoardingPass({
   return (
     <div className={cn("relative w-full max-w-sm", className)}>
       <div
-        className="rounded-3xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
+        className="rounded-3xl border border-night/10 bg-white"
         ref={cardRef}
         style={{
           maskImage: notches,
@@ -273,12 +267,12 @@ export default function BoardingPass({
       >
         <div className="p-5">
           <div className="flex items-center justify-between">
-            <p className="flex items-center gap-2 font-medium text-sm text-zinc-900 dark:text-zinc-100">
-              <span className="flex size-6 items-center justify-center rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
-                <Plane aria-hidden className="size-3.5 -rotate-45" />
+            <p className="flex items-center gap-2 font-medium text-sm text-pine-deep">
+              <span className="flex size-6 items-center justify-center rounded-full bg-pine-deep text-white">
+                <Icon aria-hidden className="size-3.5" />
               </span>
               {current.airline}
-              <span className="font-normal text-zinc-400 dark:text-zinc-500">
+              <span className="font-normal text-night/40">
                 {current.number}
               </span>
             </p>
@@ -304,42 +298,39 @@ export default function BoardingPass({
 
           <div className="mt-5 flex items-end justify-between gap-3">
             <div className="min-w-0">
-              <p className="font-semibold text-4xl text-zinc-900 tracking-tight dark:text-zinc-50">
+              <p className="font-semibold text-4xl text-pine-deep tracking-tight">
                 {current.from.code}
               </p>
-              <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="truncate text-xs text-night/55">
                 {current.from.city} ·{" "}
                 <Flap
                   className={cn(
                     "tabular-nums transition-colors duration-300 ease-out",
                     current.from.time === issued.from.time
-                      ? "text-zinc-700 dark:text-zinc-300"
-                      : "text-orange-600 dark:text-orange-400"
+                      ? "text-night/70"
+                      : "text-ember"
                   )}
                   reduceMotion={reduceMotion}
                   value={current.from.time}
                 />
               </p>
             </div>
-            <div className="mb-5 flex flex-1 items-center gap-1.5 text-zinc-300 dark:text-zinc-700">
+            <div className="mb-5 flex flex-1 items-center gap-1.5 text-night/25">
               <span className="h-px flex-1 border-current border-t border-dashed" />
-              <Plane
-                aria-hidden
-                className="size-3.5 rotate-45 text-zinc-400 dark:text-zinc-500"
-              />
+              <Icon aria-hidden className="size-3.5 text-night/40" />
               <span className="h-px flex-1 border-current border-t border-dashed" />
             </div>
             <div className="min-w-0 text-right">
-              <p className="font-semibold text-4xl text-zinc-900 tracking-tight dark:text-zinc-50">
+              <p className="font-semibold text-4xl text-pine-deep tracking-tight">
                 {current.to.code}
               </p>
-              <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="truncate text-xs text-night/55">
                 <Flap
                   className={cn(
                     "tabular-nums transition-colors duration-300 ease-out",
                     current.to.time === issued.to.time
-                      ? "text-zinc-700 dark:text-zinc-300"
-                      : "text-orange-600 dark:text-orange-400"
+                      ? "text-night/70"
+                      : "text-ember"
                   )}
                   reduceMotion={reduceMotion}
                   value={current.to.time}
@@ -350,48 +341,35 @@ export default function BoardingPass({
           </div>
 
           <div className="mt-5 grid grid-cols-4 gap-3">
-            <Field
-              label="Gate"
-              large
-              previous={issued.gate}
-              reduceMotion={reduceMotion}
-              value={current.gate}
-            />
-            <Field
-              label="Boards"
-              large
-              previous={issued.boards}
-              reduceMotion={reduceMotion}
-              value={current.boards}
-            />
-            <Field
-              label="Seat"
-              large
-              previous={issued.seat}
-              reduceMotion={reduceMotion}
-              value={current.seat}
-            />
-            <Field
-              label="Group"
-              large
-              previous={issued.group}
-              reduceMotion={reduceMotion}
-              value={current.group}
-            />
+            {(current.fields ?? [
+              ["Gate", "gate"],
+              ["Boards", "boards"],
+              ["Seat", "seat"],
+              ["Group", "group"],
+            ]).map(([label, key]) => (
+              <Field
+                key={key}
+                label={label}
+                large
+                previous={issued[key]}
+                reduceMotion={reduceMotion}
+                value={current[key]}
+              />
+            ))}
           </div>
 
           <div className="relative mt-2 h-4 text-xs">
             <AnimatePresence initial={false} mode="popLayout">
               <motion.p
                 animate={{ opacity: 1, y: 0 }}
-                className="truncate text-zinc-500 dark:text-zinc-400"
+                className="truncate text-night/55"
                 exit={{ opacity: 0, y: -4 }}
                 initial={{ opacity: 0, y: 4 }}
                 key={current.note ?? current.date}
                 transition={fade}
               >
                 {current.note ??
-                  `${current.date} · Doors close 15 min before departure`}
+                  (current.footnote ?? `${current.date} · Doors close 15 min before departure`)}
               </motion.p>
             </AnimatePresence>
           </div>
@@ -399,7 +377,7 @@ export default function BoardingPass({
 
         {/* The tear line, between the notches. */}
         <div className="relative mx-4" ref={tearRef}>
-          <div className="border-zinc-200 border-t-2 border-dashed dark:border-zinc-800" />
+          <div className="border-night/10 border-t-2 border-dashed" />
         </div>
 
         <div className="flex items-center gap-4 p-5">
@@ -407,13 +385,13 @@ export default function BoardingPass({
             <Barcode seed={`${current.passenger}${current.number}`} />
           </div>
           <div className="shrink-0 text-right leading-tight">
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-              Passenger
+            <p className="text-[11px] text-night/55">
+              {passengerLabel}
             </p>
-            <p className="font-medium text-sm text-zinc-900 dark:text-zinc-100">
+            <p className="font-medium text-sm text-pine-deep">
               {current.passenger}
             </p>
-            <p className="mt-1 text-[11px] text-zinc-400 tabular-nums dark:text-zinc-500">
+            <p className="mt-1 text-[11px] text-night/40 tabular-nums">
               {current.date}
             </p>
           </div>
@@ -425,7 +403,7 @@ export default function BoardingPass({
         [0, 1].map((side) => (
           <svg
             aria-hidden="true"
-            className="pointer-events-none absolute text-zinc-200 dark:text-zinc-800"
+            className="pointer-events-none absolute text-night/10"
             height={NOTCH * 2 + 2}
             key={side}
             style={{

@@ -1,4 +1,6 @@
 "use client";;
+// Adapted for SOTM: fixedNights (click one date, the stay length is set), cellPrice, unit,
+// summary override, onChange, optional footer, "Booked" wording, resort palette.
 /**
  * @author: @dorianbaffier
  * @description: Stay Picker
@@ -79,7 +81,7 @@ function settleStay(from, to, minNights, blocked) {
   for (let d = from; d < to; d++) {
     if (blocked(d)) {
       end = d;
-      note = `Sold out from ${shortDate(d)}`;
+      note = `Booked from ${shortDate(d)}`;
       break;
     }
   }
@@ -90,7 +92,7 @@ function settleStay(from, to, minNights, blocked) {
     if (blocked(d)) {
       return {
         end: null,
-        note: `${minNights}-night minimum, and ${shortDate(d)} is sold out`,
+        note: `${minNights}-night minimum, and ${shortDate(d)} is booked`,
       };
     }
   }
@@ -164,17 +166,17 @@ function dayTone(edge, blocked) {
     return "";
   }
   return blocked
-    ? "text-zinc-400 line-through decoration-zinc-300 dark:text-zinc-600 dark:decoration-zinc-700"
-    : "text-zinc-900 dark:text-zinc-100";
+    ? "text-night/40 line-through decoration-night/25"
+    : "text-pine-deep";
 }
 
 function priceTone(edge, cheap) {
   if (edge) {
-    return "text-white/70 dark:text-zinc-900/60";
+    return "text-white/70";
   }
   return cheap
-    ? "text-emerald-600 dark:text-emerald-400"
-    : "text-zinc-400 dark:text-zinc-500";
+    ? "text-pine"
+    : "text-night/40";
 }
 
 function DayCell({
@@ -188,11 +190,13 @@ function DayCell({
   inStay,
   focusable,
   money,
+  cellPrice,
+  unit,
   onKeyDown
 }) {
   return (
     <button
-      aria-label={`${shortDate(day)}, ${night.blocked ? "sold out" : `${money(night.price)} a night`}`}
+      aria-label={`${shortDate(day)}, ${night.blocked ? "booked" : `${money(night.price)} ${unit}`}`}
       aria-pressed={edge}
       className="group absolute flex flex-col items-center justify-center outline-none"
       data-day={day}
@@ -209,17 +213,17 @@ function DayCell({
       <span
         className={cn(
           "relative flex size-11 flex-col items-center justify-center rounded-full leading-none transition-colors duration-150",
-          "group-focus-visible:ring-2 group-focus-visible:ring-zinc-400",
-          edge && "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900",
-          hoverEnd && "ring-1 ring-zinc-900 ring-inset dark:ring-zinc-100",
+          "group-focus-visible:ring-2 group-focus-visible:ring-night/40",
+          edge && "bg-pine-deep text-white",
+          hoverEnd && "ring-1 ring-pine-deep ring-inset",
           !(edge || inStay || night.blocked) &&
-            "group-hover:bg-zinc-100 dark:group-hover:bg-zinc-900"
+            "group-hover:bg-fog"
         )}
       >
         {night.blocked && !edge && (
           <span
             aria-hidden="true"
-            className="absolute inset-1 rounded-full text-zinc-200 dark:text-zinc-800"
+            className="absolute inset-1 rounded-full text-night/10"
             style={{
               backgroundImage:
                 "repeating-linear-gradient(135deg, currentColor 0 1px, transparent 1px 5px)",
@@ -241,7 +245,7 @@ function DayCell({
               priceTone(edge, night.price <= cheap)
             )}
           >
-            {night.price}
+            {cellPrice(night.price)}
           </span>
         )}
       </span>
@@ -260,7 +264,13 @@ export default function StayPicker({
   minNights = 2,
   currency = "$",
   onReserve,
-  className
+  className,
+  fixedNights = null,
+  cellPrice = (p) => p,
+  unit = "a night",
+  summary: summaryOverride,
+  onChange,
+  showFooter = true
 }) {
   const [view, setView] = useMonth(initialMonth);
   const [direction, setDirection] = useState(1);
@@ -278,6 +288,13 @@ export default function StayPicker({
   const noteTimer = useRef(undefined);
 
   useEffect(() => () => clearTimeout(noteTimer.current), []);
+
+  // Report the picked range up; a ref so a new callback each render doesn't re-fire it.
+  const changeRef = useRef(onChange);
+  changeRef.current = onChange;
+  useEffect(() => {
+    changeRef.current?.(start !== null && end !== null ? { checkIn: isoOf(start), checkOut: isoOf(end) } : null);
+  }, [start, end]);
 
   const first = dayOf(view.year, view.month, 1);
   const daysIn = new Date(Date.UTC(view.year, view.month + 1, 0)).getUTCDate();
@@ -322,16 +339,26 @@ export default function StayPicker({
 
   const begin = (day) => {
     if (nightOf(day).blocked) {
-      say("Sold out that night");
+      say("Already booked that day");
+      return;
+    }
+    setReserved(false);
+    if (fixedNights) {
+      const out = settle(day, day + fixedNights, true);
+      if (out === null || out - day < fixedNights) {
+        say(`Needs ${fixedNights} free ${fixedNights > 1 ? "nights" : "day"} in a row`);
+        return;
+      }
+      setStart(day);
+      setEnd(out);
       return;
     }
     setStart(day);
     setEnd(null);
-    setReserved(false);
   };
 
   const choose = (day) => {
-    if (start === null || end !== null || day <= start) {
+    if (fixedNights || start === null || end !== null || day <= start) {
       begin(day);
       return;
     }
@@ -359,7 +386,7 @@ export default function StayPicker({
     }
     dragging.current = true;
     // A press on a fresh day starts a stay; a press while picking ends one.
-    if (start === null || end !== null || day <= start) {
+    if (fixedNights || start === null || end !== null || day <= start) {
       begin(day);
     }
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -432,7 +459,9 @@ export default function StayPicker({
     : { type: "spring", duration: 0.35, bounce: 0 };
   const fade = { duration: reduceMotion ? 0 : 0.18, ease: EASE_OUT };
 
-  const summary = summaryFor(start, end);
+  const summary = summaryOverride
+    ? summaryOverride(start === null ? null : isoOf(start), end === null ? null : isoOf(end))
+    : summaryFor(start, end);
   // The one day Tab lands on: check-in when it's in this month, else the 1st.
   const tabDay =
     start !== null && start >= first && start < first + daysIn ? start : first;
@@ -440,7 +469,7 @@ export default function StayPicker({
   return (
     <div
       className={cn(
-        "w-full max-w-sm select-none rounded-3xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950",
+        "w-full max-w-sm select-none rounded-3xl border border-night/10 bg-white p-4",
         className
       )}
       ref={rootRef}
@@ -450,7 +479,7 @@ export default function StayPicker({
           <AnimatePresence custom={direction} initial={false} mode="popLayout">
             <motion.p
               animate={{ opacity: 1, x: 0 }}
-              className="font-medium text-sm text-zinc-900 dark:text-zinc-100"
+              className="font-medium text-sm text-pine-deep"
               exit={{ opacity: 0, x: -12 * direction }}
               initial={{ opacity: 0, x: 12 * direction }}
               key={`${view.year}-${view.month}`}
@@ -464,7 +493,7 @@ export default function StayPicker({
           {[-1, 1].map((delta) => (
             <button
               aria-label={delta < 0 ? "Previous month" : "Next month"}
-              className="flex size-8 items-center justify-center rounded-full text-zinc-500 outline-none transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:ring-2 focus-visible:ring-zinc-400 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+              className="flex size-8 items-center justify-center rounded-full text-night/55 outline-none transition-colors duration-150 hover:bg-fog hover:text-pine-deep focus-visible:ring-2 focus-visible:ring-night/40"
               key={delta}
               onClick={() => go(delta)}
               type="button"
@@ -479,7 +508,7 @@ export default function StayPicker({
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-7 text-center text-[11px] text-zinc-400 dark:text-zinc-500">
+      <div className="mt-3 grid grid-cols-7 text-center text-[11px] text-night/40">
         {WEEKDAYS.map((d) => (
           <span key={d}>{d}</span>
         ))}
@@ -512,8 +541,8 @@ export default function StayPicker({
                 animate={{ clipPath: clipFor(s), opacity: 1 }}
                 aria-hidden="true"
                 className={cn(
-                  "pointer-events-none absolute inset-x-0 h-11 bg-zinc-100 dark:bg-zinc-800/70",
-                  picking && "bg-zinc-100/70 dark:bg-zinc-800/50"
+                  "pointer-events-none absolute inset-x-0 h-11 bg-fog",
+                  picking && "bg-fog/70"
                 )}
                 initial={{
                   clipPath: clipFor({
@@ -549,6 +578,8 @@ export default function StayPicker({
                 key={day}
                 label={i + 1}
                 money={money}
+                cellPrice={cellPrice}
+                unit={unit}
                 night={nightOf(day)}
                 onKeyDown={onKeyDown}
               />
@@ -563,8 +594,8 @@ export default function StayPicker({
             animate={{ opacity: 1, y: 0 }}
             className={cn(
               note
-                ? "text-orange-600 dark:text-orange-400"
-                : "text-zinc-500 dark:text-zinc-400"
+                ? "text-ember"
+                : "text-night/55"
             )}
             exit={{ opacity: 0, y: -4 }}
             initial={{ opacity: 0, y: 4 }}
@@ -576,14 +607,14 @@ export default function StayPicker({
         </AnimatePresence>
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-3 border-zinc-100 border-t px-1 pt-3 dark:border-zinc-900">
+      {showFooter && <div className="mt-3 flex items-center justify-between gap-3 border-fog border-t px-1 pt-3">
         <div className="min-w-0 leading-tight">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">Total</p>
+          <p className="text-xs text-night/55">Total</p>
           <div className="relative h-6 overflow-hidden">
             <AnimatePresence initial={false} mode="popLayout">
               <motion.p
                 animate={{ opacity: 1, y: 0 }}
-                className="font-semibold text-lg text-zinc-900 tabular-nums tracking-tight dark:text-zinc-50"
+                className="font-semibold text-lg text-pine-deep tabular-nums tracking-tight"
                 exit={{ opacity: 0, y: -10 }}
                 initial={{ opacity: 0, y: 10 }}
                 key={total}
@@ -597,13 +628,13 @@ export default function StayPicker({
         <button
           aria-disabled={!total}
           className={cn(
-            "h-10 shrink-0 rounded-full px-5 font-medium text-sm outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-950",
+            "h-10 shrink-0 rounded-full px-5 font-medium text-sm outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-night/40 focus-visible:ring-offset-2",
             reserved &&
-              "bg-emerald-600 text-white dark:bg-emerald-500 dark:text-emerald-950",
+              "bg-pine text-white",
             !reserved &&
               (total
-                ? "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
-                : "bg-zinc-100 text-zinc-400 dark:bg-zinc-900 dark:text-zinc-600")
+                ? "bg-pine-deep text-white hover:bg-pine"
+                : "bg-fog text-night/40")
           )}
           onClick={() => {
             if (start === null || end === null) {
@@ -616,7 +647,7 @@ export default function StayPicker({
         >
           {reserved ? "Reserved" : "Reserve"}
         </button>
-      </div>
+      </div>}
     </div>
   );
 }

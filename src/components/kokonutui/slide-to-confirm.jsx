@@ -263,7 +263,7 @@ export default function SlideToConfirm({
       <motion.div
         className={cn(
           "relative overflow-hidden rounded-full border",
-          "border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900",
+          "border-night/10 bg-fog",
           disabled && "opacity-50"
         )}
         ref={trackRef}
@@ -274,7 +274,7 @@ export default function SlideToConfirm({
             centers and reads as centered. */}
         <motion.span
           aria-hidden
-          className="absolute inset-0 flex items-center justify-center whitespace-nowrap pl-6 font-medium text-sm text-zinc-500 dark:text-zinc-400"
+          className="absolute inset-0 flex items-center justify-center whitespace-nowrap pl-6 font-medium text-sm text-night/55"
           style={{ opacity: labelOpacity }}
         >
           {label}
@@ -287,8 +287,8 @@ export default function SlideToConfirm({
           className={cn(
             "absolute inset-0 transition-colors duration-300 ease-out motion-reduce:transition-none",
             done
-              ? "bg-emerald-600 dark:bg-emerald-500"
-              : "bg-zinc-900 dark:bg-zinc-100"
+              ? "bg-pine"
+              : "bg-pine-deep"
           )}
           style={{ clipPath: fillClip, opacity: fillOpacity }}
         >
@@ -298,8 +298,8 @@ export default function SlideToConfirm({
               className={cn(
                 "absolute inset-0 flex items-center justify-center gap-2 whitespace-nowrap font-medium text-sm",
                 done
-                  ? "text-white dark:text-emerald-950"
-                  : "text-white dark:text-zinc-900",
+                  ? "text-white"
+                  : "text-white",
                 phase === "idle" || phase === "dragging" ? "pl-6" : "pr-6"
               )}
               exit={{ opacity: 0, y: -8, filter: "blur(2px)" }}
@@ -321,9 +321,8 @@ export default function SlideToConfirm({
           aria-label={`${label}. Press Enter to confirm.`}
           className={cn(
             "absolute flex touch-none items-center justify-center rounded-full outline-none",
-            "bg-white text-zinc-900 shadow-[0_1px_2px_rgb(0_0_0/0.12),0_0_0_1px_rgb(0_0_0/0.06)]",
-            "dark:bg-zinc-800 dark:text-zinc-100 dark:shadow-[0_1px_2px_rgb(0_0_0/0.5),0_0_0_1px_rgb(255_255_255/0.08)]",
-            "focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-100 dark:focus-visible:ring-offset-zinc-900",
+            "bg-white text-pine-deep shadow-[0_1px_2px_rgb(0_0_0/0.12),0_0_0_1px_rgb(0_0_0/0.06)]",
+            "focus-visible:ring-2 focus-visible:ring-night/40 focus-visible:ring-offset-2 focus-visible:ring-offset-fog",
             phase === "idle" && !disabled && "cursor-grab",
             phase === "dragging" && "cursor-grabbing"
           )}
@@ -354,7 +353,7 @@ export default function SlideToConfirm({
             <Check
               aria-hidden
               className={cn(
-                "absolute inset-0 size-5 text-emerald-600 transition-[opacity,scale,filter] duration-200 ease-out motion-reduce:transition-none dark:text-emerald-400",
+                "absolute inset-0 size-5 text-pine transition-[opacity,scale,filter] duration-200 ease-out motion-reduce:transition-none",
                 done ? "scale-100 opacity-100" : "scale-50 opacity-0 blur-[2px]"
               )}
               strokeWidth={2.5}
@@ -372,7 +371,7 @@ export default function SlideToConfirm({
             >
               <title>Working</title>
               <circle
-                className="stroke-zinc-200 dark:stroke-zinc-700"
+                className="stroke-night/10"
                 cx="12"
                 cy="12"
                 fill="none"
