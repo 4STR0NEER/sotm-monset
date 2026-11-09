@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createTimeline, stagger } from "animejs";
-import { Mountain, Phone } from "lucide-react";
+import { Download, Mountain, Phone } from "lucide-react";
 import BoardingPass from "@/components/kokonutui/boarding-pass";
 import { Link } from "@/lib/router";
 import { ONLINE_PAYMENTS, MANUAL_METHODS, depositCheckoutUrl } from "@/lib/payments";
@@ -30,6 +30,29 @@ const fmt = (iso) => new Date(iso + "T00:00:00Z").toLocaleDateString("en-PH", { 
 // The booking comes back as a "mountain pass": Cebu City → SOTM, 816 m. It drops in, tilts and settles.
 export default function Confirmation({ booking: b, onAgain }) {
   const root = useRef(null);
+  const pass = useRef(null);
+  const [saving, setSaving] = useState(false);
+
+  // Saves the pass as a PNG, framed in the page's pine green so it reads well in a camera roll.
+  const download = async () => {
+    setSaving(true);
+    try {
+      const { toPng } = await import("html-to-image");
+      const el = pass.current, pad = 28;
+      const a = document.createElement("a");
+      a.href = await toPng(el, {
+        pixelRatio: 3, backgroundColor: "#163828",
+        width: el.offsetWidth + pad * 2, height: el.offsetHeight + pad * 2,
+        style: { margin: `${pad}px` },
+      });
+      a.download = `SOTM-pass-${b.id}.png`;
+      a.click();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  };
   const pkg = BOOKABLE[b.package];
   const nights = Math.round((Date.parse(b.checkOut) - Date.parse(b.checkIn)) / 864e5);
 
@@ -77,7 +100,8 @@ export default function Confirmation({ booking: b, onAgain }) {
           </div>
         </div>
 
-        <div data-pass className="justify-self-center">
+        <div data-pass className="flex flex-col items-center gap-4 justify-self-center">
+          <div ref={pass}>
           <BoardingPass
             className="w-[min(92vw,24rem)] max-w-none text-night"
             Icon={Mountain}
@@ -98,6 +122,10 @@ export default function Confirmation({ booking: b, onAgain }) {
               status: "requested",
             }}
           />
+          </div>
+          <button onClick={download} disabled={saving} className="inline-flex items-center gap-2 rounded-full border border-mist/25 px-5 py-2.5 text-sm font-semibold transition-colors hover:border-mist/60 disabled:opacity-60">
+            <Download size={16} aria-hidden="true" /> {saving ? "Saving…" : "Save pass as image"}
+          </button>
         </div>
       </div>
     </section>

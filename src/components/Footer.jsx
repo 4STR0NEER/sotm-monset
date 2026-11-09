@@ -21,7 +21,6 @@ export default function Footer() {
             <Link to="/#faq" className="hover:text-mist">FAQs</Link>
             <Link to="/book" className="hover:text-mist">Book</Link>
             <Link to="/terms" className="hover:text-mist">Terms &amp; Conditions</Link>
-            <Link to="/owner" className="hover:text-mist">Owner sign-in</Link>
           </nav>
           <p className="text-xs leading-relaxed sm:text-right">
             Concept site by Monset. Photos © {RESORT.name}. Video: Mixkit.<br />
