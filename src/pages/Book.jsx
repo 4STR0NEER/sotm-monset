@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Check, Clock, Minus, Moon, PartyPopper, Plus, ShowerHead, Sparkles, UtensilsCrossed, Waves, WifiOff } from "lucide-react";
+import { Check, Clock, Minus, Moon, PartyPopper, Plus, ShowerHead, UtensilsCrossed, Waves, WifiOff } from "lucide-react";
 import StayPicker from "@/components/kokonutui/stay-picker";
 import BookingSummary from "@/components/booking/BookingSummary";
 import Confirmation from "@/components/booking/Confirmation";
 import { useSearch } from "@/lib/router";
 import { initScrollFx } from "@/lib/scroll-fx";
-import { createBooking, takenDates, useBookings } from "@/lib/bookings";
+import { createBooking, useTakenDates } from "@/lib/bookings";
 import { KINDS, quote, isStay, unitOf, isWeekendDay, DAY_WEEKDAY, DAY_WEEKEND, VISITOR, EVENT_FEE } from "@/lib/pricing";
 import { ADDONS, BOOKABLE, KITCHEN, RESORT, STAYS, nightlyRate, peso } from "@/data/site";
 
@@ -134,12 +134,12 @@ export default function Book() {
   const [form, setForm] = useState({ name: "", phone: "", email: "", notes: "" });
   const [touched, setTouched] = useState({});
   const [done, setDone] = useState(null);
-  const bookings = useBookings();
+  const [sendError, setSendError] = useState(null);
 
   useEffect(initScrollFx, [done]);
 
   const kind = KINDS[pkgId];
-  const taken = useMemo(() => takenDates(bookings, unitOf(pkgId)), [bookings, pkgId]);
+  const [taken, refreshTaken] = useTakenDates(unitOf(pkgId));
   const stay = isStay(pkgId);
   const t = today();
 
@@ -195,11 +195,18 @@ export default function Book() {
   const confirm = async () => {
     setTouched({ name: true, phone: true, email: true });
     if (missing.length) throw new Error("incomplete");
-    const b = createBooking({ ...booking, ...form, email: form.email.trim(), phone: form.phone.replace(/[\s-]/g, "") });
-    setTimeout(() => {
-      setDone(b);
-      scrollTo({ top: 0 });
-    }, 900);
+    setSendError(null);
+    try {
+      const b = await createBooking({ ...booking, ...form, email: form.email.trim(), phone: form.phone.replace(/[\s-]/g, "") });
+      setTimeout(() => {
+        setDone(b);
+        scrollTo({ top: 0 });
+      }, 900);
+    } catch (e) {
+      setSendError(e.message);
+      refreshTaken(); // someone may have just taken these dates
+      throw e; // lets the slider settle back
+    }
   };
 
   if (done) return <Confirmation booking={done} onAgain={() => (setDone(null), setDates(null))} />;
@@ -391,10 +398,7 @@ export default function Book() {
 
           <aside className="lg:sticky lg:top-24 lg:self-start">
             <BookingSummary pkg={pkg} booking={booking} quote={q} missing={missing} onConfirm={confirm} datesText={dates ? summaryText(dates.checkIn, dates.checkOut) : null} />
-            <p className="mt-4 flex items-start gap-2 px-2 text-xs leading-relaxed text-night/45">
-              <Sparkles size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
-              Demo booking: saved in this browser only, and visible in the owner dashboard. Nothing is charged online yet.
-            </p>
+            <p role="alert" className="mt-4 px-2 text-sm font-medium text-crimson empty:hidden">{sendError}</p>
           </aside>
         </div>
       </div>

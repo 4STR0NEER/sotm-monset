@@ -1,126 +1,114 @@
-// The booking "backend" for the demo: localStorage, seeded with sample bookings so the
-// calendar and the owner dashboard have something in them. Swap these functions for fetch()
-// calls to a real API later; nothing else in the app touches storage.
-import { useSyncExternalStore } from "react";
+// Bookings live in Supabase (table `bookings`, see supabase/migrations/0001_bookings.sql).
+// Guests can only file requests and read which nights are taken; the signed-in owner reads and
+// edits everything. Nothing else in the app talks to the database about bookings.
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { quote, unitOf } from "./pricing.js";
+import { supabase } from "./supabase.js";
 
-const KEY = "sotm-bookings-v2";
 const DAY = 86_400_000;
 const iso = (t) => new Date(t).toISOString().slice(0, 10);
-const todayUTC = () => Date.parse(iso(Date.now()));
+const OFFLINE = "Online booking is offline right now. Please call us to book.";
 
-// Seeded random so every visitor sees the same sample data on the same day.
-function rng(seed) {
-  return () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-}
-const FIRST = ["Ana", "Mark", "Joy", "Paolo", "Kristine", "Jerome", "Bea", "Carlo", "Liza", "Rafael", "Grace", "Miguel", "Trisha", "Dennis", "Camille", "Noel"];
-const LAST = ["Dela Cruz", "Santos", "Reyes", "Villanueva", "Ong", "Tan", "Lim", "Cabahug", "Abellana", "Go", "Fernandez", "Ybañez", "Lao", "Uy"];
+// The app speaks camelCase, the table snake_case.
+const COLS = { checkIn: "check_in", checkOut: "check_out", createdAt: "created_at", emailedAt: "emailed_at" };
+const BACK = Object.fromEntries(Object.entries(COLS).map(([a, b]) => [b, a]));
+const toRow = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [COLS[k] ?? k, v]));
+const fromRow = (r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [BACK[k] ?? k, v]));
 
-function seed() {
-  const r = rng(816);
-  const t0 = todayUTC();
-  const out = [];
-  let day = -120;
-  let n = 1;
-  while (day < 90) {
-    day += 2 + Math.floor(r() * 5);
-    const pick = r();
-    const pkg = pick < 0.3 ? "lodge" : pick < 0.45 ? "chalet" : pick < 0.82 ? "dayuse" : pick < 0.93 ? "birthday" : "wedding";
-    const nights = pkg === "lodge" || pkg === "chalet" ? 1 + Math.floor(r() * 2) : pkg === "wedding" ? 2 : 1;
-    const checkIn = iso(t0 + day * DAY);
-    const checkOut = iso(t0 + (day + nights) * DAY);
-    const guests = pkg === "dayuse" ? 4 + Math.floor(r() * 14) : pkg === "wedding" ? 40 + Math.floor(r() * 10) : pkg === "chalet" ? 10 + Math.floor(r() * 6) : 12 + Math.floor(r() * 14);
-    const b = {
-      package: pkg, checkIn, checkOut, guests,
-      kids: Math.floor(r() * 4), pets: r() < 0.25 ? 1 : 0,
-      event: pkg === "lodge" && r() < 0.2, visitors: 0,
-    };
-    const q = quote(b);
-    const past = day + nights <= 0;
-    const status = past ? (r() < 0.08 ? "cancelled" : "completed") : r() < 0.35 ? "requested" : r() < 0.06 ? "cancelled" : "confirmed";
-    const name = `${FIRST[Math.floor(r() * FIRST.length)]} ${LAST[Math.floor(r() * LAST.length)]}`;
-    out.push({
-      ...b,
-      id: `SOTM-${String(1000 + n++)}`,
-      name,
-      phone: `09${Math.floor(100000000 + r() * 899999999)}`,
-      email: `${name.split(" ")[0].toLowerCase()}@example.com`,
-      notes: "",
-      total: pkg === "birthday" ? 0 : q.total,
-      deposit: q.deposit,
-      paid: status === "completed" ? q.total : status === "confirmed" ? q.deposit : 0,
-      status,
-      createdAt: new Date(t0 + (day - 7 - Math.floor(r() * 30)) * DAY).toISOString(),
-      source: "sample",
-    });
-  }
-  return out;
-}
-
-let cache = null;
-function read() {
-  if (cache) return cache;
-  try {
-    cache = JSON.parse(localStorage.getItem(KEY));
-  } catch {}
-  if (!Array.isArray(cache)) {
-    cache = seed();
-    write(cache);
-  }
-  return cache;
-}
-const listeners = new Set();
-function write(list) {
-  cache = list;
-  try { localStorage.setItem(KEY, JSON.stringify(list)); } catch {}
-  listeners.forEach((fn) => fn());
-}
-// another tab (e.g. the owner dashboard) changed the bookings
-addEventListener("storage", (e) => {
-  if (e.key !== KEY) return;
-  cache = null;
-  listeners.forEach((fn) => fn());
-});
-
-export const subscribe = (fn) => (listeners.add(fn), () => listeners.delete(fn));
-export const listBookings = () => read();
-export const useBookings = () => useSyncExternalStore(subscribe, read);
-
-/** Dates (YYYY-MM-DD) a stay is taken: every night of a live booking there. No unit = either stay. */
-export function takenDates(list = read(), unit) {
+/** Nights (YYYY-MM-DD) a stay is taken. Works on full bookings or booked_ranges() rows. No unit = either stay. */
+export function takenDates(list, unit) {
   const set = new Set();
   for (const b of list) {
-    if (b.status === "cancelled" || (unit && unitOf(b.package) !== unit)) continue;
+    if (b.status === "cancelled" || (unit && (b.unit ?? unitOf(b.package)) !== unit)) continue;
     for (let t = Date.parse(b.checkIn); t < Date.parse(b.checkOut); t += DAY) set.add(iso(t));
   }
   return set;
 }
 
-export function createBooking(input) {
-  const list = read();
-  const taken = takenDates(list, unitOf(input.package));
-  for (let t = Date.parse(input.checkIn); t < Date.parse(input.checkOut); t += DAY) {
-    if (taken.has(iso(t))) throw new Error("Those dates were just booked. Please pick others.");
-  }
+// ---- guests -------------------------------------------------------------------------------
+
+/** Taken nights for one stay, from the dates-only booked_ranges() function. `refresh` re-fetches. */
+export function useTakenDates(unit) {
+  const [ranges, setRanges] = useState([]);
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    let live = true;
+    supabase?.rpc("booked_ranges").then(({ data }) => live && data && setRanges(data.map(fromRow)));
+    return () => { live = false; };
+  }, [tick]);
+  const taken = useMemo(() => takenDates(ranges, unit), [ranges, unit]);
+  return [taken, () => setTick((t) => t + 1)];
+}
+
+const newId = () => {
+  const abc = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O or 1/I to misread over the phone
+  return "SOTM-" + Array.from(crypto.getRandomValues(new Uint8Array(6)), (n) => abc[n % abc.length]).join("");
+};
+
+export async function createBooking(input) {
+  if (!supabase) throw new Error(OFFLINE);
   const q = quote(input);
+  const fields = ["package", "checkIn", "checkOut", "guests", "kids", "pets", "visitors", "event", "addons", "name", "phone", "email", "notes"];
   const booking = {
-    ...input,
-    id: `SOTM-${Date.now().toString(36).slice(-5).toUpperCase()}`,
-    total: q.total,
-    deposit: q.deposit,
-    paid: 0,
-    status: "requested",
-    createdAt: new Date().toISOString(),
-    source: "web",
+    ...Object.fromEntries(fields.map((k) => [k, input[k]])),
+    kids: input.kids | 0, pets: input.pets | 0, visitors: input.visitors | 0, event: !!input.event, addons: input.addons ?? {},
+    total: q.total, deposit: q.deposit, paid: 0, status: "requested", source: "web",
   };
-  write([...list, booking]);
-  return booking;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const id = newId();
+    const { error } = await supabase.from("bookings").insert(toRow({ ...booking, id }));
+    if (!error) {
+      // confirmation to the guest + a copy to the owner (supabase/functions/booking-email)
+      supabase.functions.invoke("booking-email", { body: { id } }).catch(() => {});
+      return { ...booking, id, createdAt: new Date().toISOString() };
+    }
+    if (error.code === "23505") continue; // id collision: draw again
+    if (error.code === "23P01") throw new Error("Those dates were just booked. Please pick others.");
+    console.error(error);
+    throw new Error("We couldn't send your request. Please try again, or call us.");
+  }
+  throw new Error("We couldn't send your request. Please try again, or call us.");
 }
 
-export function updateBooking(id, patch) {
-  write(read().map((b) => (b.id === id ? { ...b, ...patch } : b)));
+// ---- owner (RLS only returns rows to the owner account) -------------------------------------
+
+let cache = [];
+let channel = null;
+const listeners = new Set();
+const emit = () => listeners.forEach((fn) => fn());
+
+async function load() {
+  const { data, error } = await supabase.from("bookings").select("*").order("check_in");
+  if (error) return console.error(error);
+  cache = data.map(fromRow);
+  emit();
 }
 
-export function resetBookings() {
-  write(seed());
+function start() {
+  if (channel || !supabase) return;
+  load();
+  // a guest booking or an edit in another tab shows up straight away
+  channel = supabase.channel("bookings").on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, load).subscribe();
+}
+
+/** Call on sign-out so the next account starts clean. */
+export function stopBookings() {
+  if (channel) supabase.removeChannel(channel);
+  channel = null;
+  cache = [];
+  emit();
+}
+
+const subscribe = (fn) => (listeners.add(fn), start(), () => listeners.delete(fn));
+export const useBookings = () => useSyncExternalStore(subscribe, () => cache);
+
+/** Optimistic: the dashboard updates at once, and rolls back to the server's copy if the save fails. */
+export async function updateBooking(id, patch) {
+  cache = cache.map((b) => (b.id === id ? { ...b, ...patch } : b));
+  emit();
+  const { error } = await supabase.from("bookings").update(toRow(patch)).eq("id", id);
+  if (error) {
+    load();
+    throw new Error("That change didn't save. Check your connection and try again.");
+  }
 }

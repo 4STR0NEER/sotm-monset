@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { CalendarDays, ExternalLink, LayoutGrid, ListChecks, RotateCcw } from "lucide-react";
+import { CalendarDays, ExternalLink, LayoutGrid, ListChecks, LogOut } from "lucide-react";
 import Overview from "@/components/owner/Overview";
 import BookingsTable from "@/components/owner/BookingsTable";
 import OwnerCalendar from "@/components/owner/OwnerCalendar";
 import BookingDrawer from "@/components/owner/BookingDrawer";
+import OwnerSignIn from "@/components/owner/OwnerSignIn";
 import { fmtDate, today } from "@/components/owner/ui";
 import { Link } from "@/lib/router";
-import { resetBookings, updateBooking, useBookings } from "@/lib/bookings";
+import { stopBookings, updateBooking, useBookings } from "@/lib/bookings";
+import { OWNER_EMAIL, supabase } from "@/lib/supabase";
 
-// The owners' side: a mock dashboard over the same bookings the website writes (lib/bookings.js),
-// so a booking made on /book shows up here straight away, even in another tab.
+// The owners' side, over the live Supabase bookings (lib/bookings.js): a guest's request on /book
+// shows up here straight away. Only the owner account gets in, and the database enforces it too.
 const TABS = [
   ["overview", "Overview", LayoutGrid],
   ["bookings", "Bookings", ListChecks],
@@ -18,6 +20,24 @@ const TABS = [
 ];
 
 export default function Owner() {
+  const [session, setSession] = useState(undefined); // undefined while checking
+  useEffect(() => {
+    if (!supabase) return setSession(null);
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s);
+      if (!s) stopBookings();
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  if (session === undefined) return <div className="min-h-screen bg-pine-deep" />;
+  const email = session?.user?.email;
+  if (email !== OWNER_EMAIL) return <OwnerSignIn wrongAccount={email} />;
+  return <Dashboard />;
+}
+
+function Dashboard() {
   const bookings = useBookings();
   const [tab, setTab] = useState("overview");
   const [filter, setFilter] = useState("all");
@@ -37,8 +57,9 @@ export default function Owner() {
   // apply a change to a booking, with a 5-second undo that puts the old values back
   const act = (b, patch, msg) => {
     const before = Object.fromEntries(Object.keys(patch).map((k) => [k, b[k]]));
-    updateBooking(b.id, patch);
-    notify(msg, () => updateBooking(b.id, before));
+    const failed = (e) => notify(e.message);
+    updateBooking(b.id, patch).catch(failed);
+    notify(msg, () => updateBooking(b.id, before).catch(failed));
   };
 
   const goTo = (t, f) => (setTab(t), f && setFilter(f));
@@ -69,10 +90,10 @@ export default function Owner() {
         <div className="flex items-center gap-2 lg:mt-auto lg:flex-col lg:items-stretch">
           <Link to="/" className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-fog/70 hover:text-mist"><ExternalLink size={16} /> <span className="hidden sm:inline">View website</span></Link>
           <button
-            onClick={() => (resetBookings(), notify("Demo data reset"))}
+            onClick={() => supabase.auth.signOut()}
             className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-fog/70 hover:text-mist"
           >
-            <RotateCcw size={16} /> <span className="hidden sm:inline">Reset demo data</span>
+            <LogOut size={16} /> <span className="hidden sm:inline">Sign out</span>
           </button>
         </div>
       </aside>
@@ -80,7 +101,7 @@ export default function Owner() {
       <div className="min-w-0 px-4 pb-24 pt-6 sm:px-8 lg:pt-10">
         <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="stamp text-xs text-moss">Owner dashboard · demo data</p>
+            <p className="stamp text-xs text-moss">Owner dashboard</p>
             <h1 className="font-display text-4xl font-light text-pine-deep sm:text-5xl">
               {tab === "overview" ? "Good day." : TABS.find((x) => x[0] === tab)[1]}
             </h1>
