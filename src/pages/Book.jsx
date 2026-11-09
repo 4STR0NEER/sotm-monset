@@ -157,13 +157,13 @@ export default function Book() {
   const errors = {
     name: form.name.trim().length < 2 ? "Please enter your name." : null,
     phone: !PHONE.test(form.phone.replace(/[\s-]/g, "")) ? "Enter a PH mobile number, e.g. 0917 123 4567." : null,
-    email: form.email && !EMAIL.test(form.email) ? "That email doesn't look right." : null,
+    email: !form.email.trim() ? "We email your confirmation and receipts, so we need this." : !EMAIL.test(form.email.trim()) ? "That email doesn't look right, e.g. name@gmail.com." : null,
   };
   const missing = [
     !dates && "pick your dates",
     errors.name && "your name",
     errors.phone && "a mobile number",
-    errors.email && "a valid email",
+    errors.email && "your email",
     !agreed && "agree to the terms",
   ].filter(Boolean);
   const setAddon = (id, qty) => setAddons((a) => ({ ...a, [id]: qty }));
@@ -195,7 +195,7 @@ export default function Book() {
   const confirm = async () => {
     setTouched({ name: true, phone: true, email: true });
     if (missing.length) throw new Error("incomplete");
-    const b = createBooking({ ...booking, ...form, phone: form.phone.replace(/[\s-]/g, "") });
+    const b = createBooking({ ...booking, ...form, email: form.email.trim(), phone: form.phone.replace(/[\s-]/g, "") });
     setTimeout(() => {
       setDone(b);
       scrollTo({ top: 0 });
@@ -367,12 +367,12 @@ export default function Book() {
               )}
             </section>
 
-            <Step n={stay ? 5 : 4} title="Your details" hint="The resort confirms by phone, then sends deposit details.">
+            <Step n={stay ? 5 : 4} title="Your details" hint="Your confirmation and official receipts are sent to your email.">
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Full name" autoComplete="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} onBlur={() => setTouched({ ...touched, name: true })} error={touched.name && errors.name} />
                 <Field label="Mobile number" type="tel" inputMode="tel" autoComplete="tel" placeholder="0917 123 4567" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} onBlur={() => setTouched({ ...touched, phone: true })} error={touched.phone && errors.phone} />
                 <div className="sm:col-span-2">
-                  <Field label="Email (optional)" type="email" autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} onBlur={() => setTouched({ ...touched, email: true })} error={touched.email && errors.email} />
+                  <Field label="Email" type="email" inputMode="email" autoComplete="email" placeholder="name@gmail.com" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} onBlur={() => setTouched({ ...touched, email: true })} error={touched.email && errors.email} />
                 </div>
                 <div className="sm:col-span-2">
                   <Field label="Anything we should know?" rows={3} placeholder="Celebration, tray orders, all-day breakfast (₱240), arrival time…" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />

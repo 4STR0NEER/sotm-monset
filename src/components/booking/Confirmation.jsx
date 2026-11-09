@@ -52,7 +52,7 @@ export default function Confirmation({ booking: b, onAgain }) {
             See you up the mountain, {b.name.split(" ")[0]}.
           </h1>
           <p data-in className="mt-8 max-w-md text-lg leading-relaxed text-fog/75">
-            The resort will call <b className="font-medium text-mist">{b.phone}</b> during office hours ({RESORT.hours}) to confirm your {pkg.name}{b.total ? "." : " and send your quote."}
+            Your {pkg.name} {b.total ? "confirmation" : "quote"} and official receipts will be emailed to <b className="font-medium text-mist">{b.email}</b>. The resort may also call <b className="font-medium text-mist">{b.phone}</b> during office hours ({RESORT.hours}).
           </p>
           {b.total > 0 && (
             <ol data-in className="mt-8 max-w-md space-y-5 border-l border-mist/15 pl-6 text-fog/75">
