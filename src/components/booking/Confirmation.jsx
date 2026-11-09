@@ -1,17 +1,36 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createTimeline, stagger } from "animejs";
 import { Mountain, Phone } from "lucide-react";
 import BoardingPass from "@/components/kokonutui/boarding-pass";
 import { Link } from "@/lib/router";
-import { PACKAGES, RESORT, peso } from "@/data/site";
+import { ONLINE_PAYMENTS, MANUAL_METHODS, depositCheckoutUrl } from "@/lib/payments";
+import { BOOKABLE, RESORT, peso } from "@/data/site";
 
-const CODE = { overnight: "STAY", dayuse: "DAY", birthday: "BDAY", wedding: "WED" };
+const CODE = { lodge: "LODGE", chalet: "CHALET", dayuse: "DAY", birthday: "BDAY", wedding: "WED" };
+
+// Pays online when PayMongo is switched on (lib/payments.js); otherwise says how it's done today.
+function PayDeposit({ booking }) {
+  const [state, setState] = useState(null);
+  if (!ONLINE_PAYMENTS) return <>The resort sends payment details for {MANUAL_METHODS.join(", ")}. Reply with a screenshot of your receipt.</>;
+  const pay = async () => {
+    setState("loading");
+    try { location.href = await depositCheckoutUrl(booking); } catch (e) { setState(e.message); }
+  };
+  return (
+    <>
+      <button onClick={pay} disabled={state === "loading"} className="mt-2 block rounded-full bg-lantern px-5 py-2 text-sm font-semibold text-night transition-transform duration-150 active:scale-[0.97] disabled:opacity-60">
+        {state === "loading" ? "Opening payment…" : `Pay ${peso(booking.deposit)} deposit`}
+      </button>
+      {state && state !== "loading" && <span role="alert" className="mt-2 block text-sm text-lantern">{state}</span>}
+    </>
+  );
+}
 const fmt = (iso) => new Date(iso + "T00:00:00Z").toLocaleDateString("en-PH", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 
 // The booking comes back as a "mountain pass": Cebu City → SOTM, 816 m. It drops in, tilts and settles.
 export default function Confirmation({ booking: b, onAgain }) {
   const root = useRef(null);
-  const pkg = PACKAGES.find((p) => p.id === b.package);
+  const pkg = BOOKABLE[b.package];
   const nights = Math.round((Date.parse(b.checkOut) - Date.parse(b.checkIn)) / 864e5);
 
   useEffect(() => {
@@ -32,13 +51,25 @@ export default function Confirmation({ booking: b, onAgain }) {
           <h1 data-in className="max-w-[14ch] font-display text-[clamp(2.6rem,6vw,5rem)] font-light leading-[0.98]">
             See you up the mountain, {b.name.split(" ")[0]}.
           </h1>
-          <div data-in className="mt-8 max-w-md space-y-4 text-lg leading-relaxed text-fog/75">
-            <p>
-              The resort will call <b className="font-medium text-mist">{b.phone}</b> during office hours ({RESORT.hours}) to confirm your {pkg.name.toLowerCase()}
-              {b.total ? <> and arrange the {peso(b.deposit)} deposit that holds your dates.</> : <> and send your quote.</>}
-            </p>
-            <p className="text-base text-fog/55">Strictly by reservation: your dates are held for you while the resort confirms.</p>
-          </div>
+          <p data-in className="mt-8 max-w-md text-lg leading-relaxed text-fog/75">
+            The resort will call <b className="font-medium text-mist">{b.phone}</b> during office hours ({RESORT.hours}) to confirm your {pkg.name}{b.total ? "." : " and send your quote."}
+          </p>
+          {b.total > 0 && (
+            <ol data-in className="mt-8 max-w-md space-y-5 border-l border-mist/15 pl-6 text-fog/75">
+              <li>
+                <b className="block font-medium text-mist">Pay the {peso(b.deposit)} deposit to hold your dates</b>
+                <span className="text-sm leading-relaxed"><PayDeposit booking={b} /> Dates go first come, first served.</span>
+              </li>
+              <li>
+                <b className="block font-medium text-mist">Send your guest list before the stay</b>
+                <span className="text-sm leading-relaxed">Include any day visitors, so the gate lets them in.</span>
+              </li>
+              <li>
+                <b className="block font-medium text-mist">Settle the {peso(b.total - b.deposit)} balance a few days before</b>
+                <span className="text-sm leading-relaxed">By GCash or bank transfer. Check-in is {RESORT.checkIn}.</span>
+              </li>
+            </ol>
+          )}
           <div data-in className="mt-10 flex flex-wrap gap-3">
             <Link to="/" className="rounded-full bg-lantern px-7 py-3.5 font-semibold text-night transition-transform duration-150 active:scale-[0.97]">Back to the mountain</Link>
             <button onClick={onAgain} className="rounded-full border border-mist/25 px-7 py-3.5 font-semibold transition-colors hover:border-mist/60">Book another date</button>

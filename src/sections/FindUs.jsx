@@ -12,7 +12,7 @@ export default function FindUs() {
           <div>
             <p className="stamp mb-5 text-xs text-lantern">Find us</p>
             <h2 id="find-title" data-split className="font-display text-[clamp(2.4rem,5vw,4.5rem)] font-light leading-[1]">
-              One hour up from the city.
+              An hour up from the city.
             </h2>
             <p className="reveal mt-6 max-w-md text-lg leading-relaxed text-fog/75">
               Take the Transcentral Highway out of Cebu City and keep climbing. About {RESORT.kmFromCity} km, and the air turns cool well before you arrive.

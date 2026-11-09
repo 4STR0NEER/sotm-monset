@@ -3,8 +3,9 @@ import { AnimatePresence, motion } from "motion/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PKG, fmtDate, today } from "./ui";
 import { addMonths, daysInMonth, monthKey, occupancy } from "@/lib/stats";
+import { unitOf } from "@/lib/pricing";
 
-// Month grid: each booked day carries a chip in its booking type's colour with the guest's name
+// Month grid: each booking on a day gets its own chip in its booking type's colour with the guest's name
 // (so colour is never the only cue). Requested bookings are hatched and outlined, not solid.
 const WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -17,12 +18,14 @@ export default function OwnerCalendar({ bookings, open }) {
   const first = new Date(key + "-01T00:00:00Z");
   const lead = (first.getUTCDay() + 6) % 7;
   const days = Array.from({ length: daysInMonth(key) }, (_, i) => `${key}-${String(i + 1).padStart(2, "0")}`);
+  // Every live booking on each day: the Lodge and the Chalet can both be taken on one date,
+  // even by the same party. Lodge-side bookings first, so each day's chips keep a stable order.
   const byDay = new Map();
-  for (const b of bookings) {
-    if (b.status === "cancelled") continue;
+  const live = bookings.filter((b) => b.status !== "cancelled").sort((a, b) => (unitOf(a.package) === "lodge" ? 0 : 1) - (unitOf(b.package) === "lodge" ? 0 : 1));
+  for (const b of live) {
     for (let d = Date.parse(b.checkIn); d < Date.parse(b.checkOut); d += 864e5) {
       const iso = new Date(d).toISOString().slice(0, 10);
-      if (iso.startsWith(key)) byDay.set(iso, b);
+      if (iso.startsWith(key)) byDay.set(iso, [...(byDay.get(iso) ?? []), b]);
     }
   }
   const occ = Math.round(occupancy(bookings, key) * 100);
@@ -59,33 +62,38 @@ export default function OwnerCalendar({ bookings, open }) {
         >
           {Array.from({ length: lead }, (_, i) => <span key={`x${i}`} />)}
           {days.map((iso) => {
-            const b = byDay.get(iso);
-            const p = b && PKG[b.package];
-            const pending = b?.status === "requested";
-            const startsHere = b && (b.checkIn === iso || iso.endsWith("-01"));
+            const list = byDay.get(iso) ?? [];
+            const day = fmtDate(iso, { weekday: "long", month: "long", day: "numeric" });
             return (
-              <button
+              <div
                 key={iso}
-                disabled={!b}
-                onClick={() => b && open(b.id)}
-                aria-label={`${fmtDate(iso, { weekday: "long", month: "long", day: "numeric" })}${b ? `: ${p.label}, ${b.name}, ${b.status}` : ": free"}`}
-                className={`relative flex min-h-20 flex-col rounded-xl border p-1.5 text-left transition-[transform,border-color] duration-150 ease-[var(--ease-out)] sm:min-h-24 sm:p-2 ${b ? "border-transparent hover:-translate-y-0.5" : "border-night/[0.06]"} ${iso < t ? "opacity-55" : ""}`}
-                style={
-                  b
-                    ? pending
-                      ? { borderColor: p.color, backgroundImage: `repeating-linear-gradient(45deg, ${p.color}26 0 2px, transparent 2px 7px)` }
-                      : { background: `${p.color}1f`, borderColor: `${p.color}55` }
-                    : undefined
-                }
+                aria-label={list.length ? undefined : `${day}: free`}
+                className={`flex min-h-20 min-w-0 flex-col gap-1 rounded-xl border p-1.5 sm:min-h-24 sm:p-2 ${list.length ? "border-transparent" : "border-night/[0.06]"} ${iso < t ? "opacity-55" : ""}`}
               >
                 <span className={`tnum text-xs ${iso === t ? "grid size-6 place-items-center rounded-full bg-night font-semibold text-mist" : "text-night/60"}`}>{+iso.slice(8)}</span>
-                {b && (
-                  <span className="mt-auto">
-                    <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-night/70"><span className="size-1.5 rounded-full" style={{ background: p.color }} />{p.code}</span>
-                    {startsHere && <span className="hidden truncate text-[11px] font-medium text-night/80 sm:block">{b.name.split(" ")[0]}</span>}
-                  </span>
-                )}
-              </button>
+                <span className="mt-auto flex flex-col gap-1">
+                  {list.map((b) => {
+                    const p = PKG[b.package];
+                    const startsHere = b.checkIn === iso || iso.endsWith("-01");
+                    return (
+                      <button
+                        key={b.id}
+                        onClick={() => open(b.id)}
+                        aria-label={`${day}: ${p.label}, ${b.name}, ${b.status}`}
+                        className="min-w-0 rounded-lg border px-1 py-1 text-left sm:px-1.5 transition-[transform,border-color] duration-150 ease-[var(--ease-out)] hover:-translate-y-0.5 active:scale-[0.97]"
+                        style={
+                          b.status === "requested"
+                            ? { borderColor: p.color, backgroundImage: `repeating-linear-gradient(45deg, ${p.color}26 0 2px, transparent 2px 7px)` }
+                            : { background: `${p.color}1f`, borderColor: `${p.color}55` }
+                        }
+                      >
+                        <span className="flex items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-night/70 sm:justify-start"><span className="size-1.5 shrink-0 rounded-full" style={{ background: p.color }} /><span className="hidden truncate sm:inline">{p.code}</span></span>
+                        {startsHere && <span className="hidden truncate text-[11px] font-medium text-night/80 sm:block">{b.name.split(" ")[0]}</span>}
+                      </button>
+                    );
+                  })}
+                </span>
+              </div>
             );
           })}
         </motion.div>

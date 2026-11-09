@@ -6,8 +6,9 @@ import Footer from "@/components/Footer";
 import Home from "@/pages/Home";
 import Book from "@/pages/Book";
 import Owner from "@/pages/Owner";
+import Terms from "@/pages/Terms";
 
-const PAGES = { "/": Home, "/book": Book };
+const PAGES = { "/": Home, "/book": Book, "/terms": Terms };
 
 export default function App() {
   const path = usePath();

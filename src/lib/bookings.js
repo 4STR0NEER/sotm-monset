@@ -2,9 +2,9 @@
 // calendar and the owner dashboard have something in them. Swap these functions for fetch()
 // calls to a real API later; nothing else in the app touches storage.
 import { useSyncExternalStore } from "react";
-import { quote } from "./pricing.js";
+import { quote, unitOf } from "./pricing.js";
 
-const KEY = "sotm-bookings-v1";
+const KEY = "sotm-bookings-v2";
 const DAY = 86_400_000;
 const iso = (t) => new Date(t).toISOString().slice(0, 10);
 const todayUTC = () => Date.parse(iso(Date.now()));
@@ -25,15 +25,15 @@ function seed() {
   while (day < 90) {
     day += 2 + Math.floor(r() * 5);
     const pick = r();
-    const pkg = pick < 0.42 ? "overnight" : pick < 0.82 ? "dayuse" : pick < 0.93 ? "birthday" : "wedding";
-    const nights = pkg === "overnight" ? 1 + Math.floor(r() * 2) : pkg === "wedding" ? 2 : 1;
+    const pkg = pick < 0.3 ? "lodge" : pick < 0.45 ? "chalet" : pick < 0.82 ? "dayuse" : pick < 0.93 ? "birthday" : "wedding";
+    const nights = pkg === "lodge" || pkg === "chalet" ? 1 + Math.floor(r() * 2) : pkg === "wedding" ? 2 : 1;
     const checkIn = iso(t0 + day * DAY);
     const checkOut = iso(t0 + (day + nights) * DAY);
-    const guests = pkg === "dayuse" ? 4 + Math.floor(r() * 14) : pkg === "wedding" ? 40 + Math.floor(r() * 10) : 12 + Math.floor(r() * 14);
+    const guests = pkg === "dayuse" ? 4 + Math.floor(r() * 14) : pkg === "wedding" ? 40 + Math.floor(r() * 10) : pkg === "chalet" ? 10 + Math.floor(r() * 6) : 12 + Math.floor(r() * 14);
     const b = {
       package: pkg, checkIn, checkOut, guests,
       kids: Math.floor(r() * 4), pets: r() < 0.25 ? 1 : 0,
-      event: pkg === "overnight" && r() < 0.2, nonStaying: 0,
+      event: pkg === "lodge" && r() < 0.2, visitors: 0,
     };
     const q = quote(b);
     const past = day + nights <= 0;
@@ -86,11 +86,11 @@ export const subscribe = (fn) => (listeners.add(fn), () => listeners.delete(fn))
 export const listBookings = () => read();
 export const useBookings = () => useSyncExternalStore(subscribe, read);
 
-/** Dates (YYYY-MM-DD) the property is taken: every night of a live booking. */
-export function takenDates(list = read()) {
+/** Dates (YYYY-MM-DD) a stay is taken: every night of a live booking there. No unit = either stay. */
+export function takenDates(list = read(), unit) {
   const set = new Set();
   for (const b of list) {
-    if (b.status === "cancelled") continue;
+    if (b.status === "cancelled" || (unit && unitOf(b.package) !== unit)) continue;
     for (let t = Date.parse(b.checkIn); t < Date.parse(b.checkOut); t += DAY) set.add(iso(t));
   }
   return set;
@@ -98,7 +98,7 @@ export function takenDates(list = read()) {
 
 export function createBooking(input) {
   const list = read();
-  const taken = takenDates(list);
+  const taken = takenDates(list, unitOf(input.package));
   for (let t = Date.parse(input.checkIn); t < Date.parse(input.checkOut); t += DAY) {
     if (taken.has(iso(t))) throw new Error("Those dates were just booked. Please pick others.");
   }

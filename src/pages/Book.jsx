@@ -1,18 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Check, Minus, Plus, PartyPopper, Sparkles } from "lucide-react";
+import { Check, Clock, Minus, Moon, PartyPopper, Plus, ShowerHead, Sparkles, UtensilsCrossed, Waves, WifiOff } from "lucide-react";
 import StayPicker from "@/components/kokonutui/stay-picker";
 import BookingSummary from "@/components/booking/BookingSummary";
 import Confirmation from "@/components/booking/Confirmation";
 import { useSearch } from "@/lib/router";
 import { initScrollFx } from "@/lib/scroll-fx";
 import { createBooking, takenDates, useBookings } from "@/lib/bookings";
-import { KINDS, quote, isWeekendDay, OVERNIGHT_INCLUDED, DAY_WEEKDAY, DAY_WEEKEND } from "@/lib/pricing";
-import { PACKAGES, RESORT, peso } from "@/data/site";
+import { KINDS, quote, isStay, unitOf, isWeekendDay, DAY_WEEKDAY, DAY_WEEKEND, VISITOR, EVENT_FEE } from "@/lib/pricing";
+import { ADDONS, BOOKABLE, KITCHEN, RESORT, STAYS, nightlyRate, peso } from "@/data/site";
 
-const CHOICES = ["overnight", "dayuse", "birthday", "wedding"].map((id) => PACKAGES.find((p) => p.id === id));
-const SHORT = { overnight: "Overnight, whole property", dayuse: "Day use, 1pm – 8pm", birthday: "Birthday package", wedding: "Intimate wedding" };
-const FROM = { overnight: "₱28,000 / night · sample", dayuse: "from ₱4,500", birthday: "price on request", wedding: "₱90,000 all-in" };
+const CHOICES = Object.entries(BOOKABLE).map(([id, c]) => ({ id, ...c }));
+
+// What a guest must know before paying, in one glance. The full rules live on /terms.
+const GOOD_TO_KNOW = [
+  [Clock, `Check-in ${RESORT.checkIn}, check-out ${RESORT.checkOut}.`],
+  [UtensilsCrossed, "Self-catering. Bring your own food, no corkage fee."],
+  [ShowerHead, "Bring towels, toothbrushes and a sweater. Toiletries and hair dryers are provided."],
+  [Waves, "Swimwear only in the pool and hot tub. No cotton, denim or wool."],
+  [WifiOff, "No phone signal up here. Vendo WiFi is ₱10 per gadget for 7 hours."],
+  [Moon, "Quiet hours 10pm – 7am. No smoking indoors or on the deck."],
+];
 const EASE = [0.23, 1, 0.32, 1];
 
 const k = (n) => (n >= 1000 ? `${+(n / 1000).toFixed(1)}k` : String(n));
@@ -114,13 +122,15 @@ export default function Book() {
   const params = new URLSearchParams(search);
   const asked = params.get("package");
 
-  const [pkgId, setPkgId] = useState(KINDS[asked] ? asked : "overnight");
+  const [pkgId, setPkgId] = useState(KINDS[asked] ? asked : "lodge");
   const [event, setEvent] = useState(asked === "event");
+  const [visitors, setVisitors] = useState(0);
+  const [addons, setAddons] = useState({});
+  const [agreed, setAgreed] = useState(false);
   const [dates, setDates] = useState(null);
-  const [guests, setGuests] = useState(12);
+  const [guests, setGuests] = useState(10);
   const [kids, setKids] = useState(0);
   const [pets, setPets] = useState(0);
-  const [nonStaying, setNonStaying] = useState(10);
   const [form, setForm] = useState({ name: "", phone: "", email: "", notes: "" });
   const [touched, setTouched] = useState({});
   const [done, setDone] = useState(null);
@@ -129,7 +139,8 @@ export default function Book() {
   useEffect(initScrollFx, [done]);
 
   const kind = KINDS[pkgId];
-  const taken = useMemo(() => takenDates(bookings), [bookings]);
+  const taken = useMemo(() => takenDates(bookings, unitOf(pkgId)), [bookings, pkgId]);
+  const stay = isStay(pkgId);
   const t = today();
 
   const booking = {
@@ -137,8 +148,9 @@ export default function Book() {
     checkIn: dates?.checkIn ?? null,
     checkOut: dates?.checkOut ?? null,
     guests, kids, pets,
-    event: pkgId === "overnight" && event,
-    nonStaying: pkgId === "overnight" && event ? nonStaying : 0,
+    event: pkgId === "lodge" && event,
+    visitors: stay ? visitors : 0,
+    addons: stay ? addons : {},
   };
   const q = quote(booking);
 
@@ -152,7 +164,9 @@ export default function Book() {
     errors.name && "your name",
     errors.phone && "a mobile number",
     errors.email && "a valid email",
+    !agreed && "agree to the terms",
   ].filter(Boolean);
+  const setAddon = (id, qty) => setAddons((a) => ({ ...a, [id]: qty }));
 
   const choosePackage = (id) => {
     if (id === pkgId) return;
@@ -164,14 +178,14 @@ export default function Book() {
   const getNight = (iso) => {
     const blocked = iso <= t || taken.has(iso);
     const price =
-      pkgId === "overnight" ? 28000
+      stay ? nightlyRate(pkgId, guests)
       : pkgId === "dayuse" ? (isWeekendDay(iso) ? DAY_WEEKEND.base : DAY_WEEKDAY.base)
       : pkgId === "wedding" ? 90000 : 0;
     return { price, blocked };
   };
 
   const summaryText = (a, b) => {
-    if (!a) return { overnight: "Pick a check-in night", dayuse: "Pick your day", birthday: "Pick the party date", wedding: "Pick your wedding day" }[pkgId];
+    if (!a) return { lodge: "Pick a check-in night", chalet: "Pick a check-in night", dayuse: "Pick your day", birthday: "Pick the party date", wedding: "Pick your wedding day" }[pkgId];
     if (!b) return `Check-in ${fmt(a)}. Now pick check-out`;
     if (pkgId === "dayuse") return `${fmt(a)} · 1pm – 8pm · ${isWeekendDay(a) ? "weekend" : "weekday"} rate`;
     const n = Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
@@ -190,8 +204,10 @@ export default function Book() {
 
   if (done) return <Confirmation booking={done} onAgain={() => (setDone(null), setDates(null))} />;
 
-  const pkg = PACKAGES.find((p) => p.id === pkgId);
-  const guestLabel = pkgId === "overnight" ? `Both rooms sleep ${OVERNIGHT_INCLUDED}; up to 30 with extra beds` : pkgId === "dayuse" ? "Price includes 4 (weekday) or 12 (weekend)" : `Up to ${kind.maxGuests}`;
+  const pkg = BOOKABLE[pkgId];
+  const guestLabel = stay
+    ? `${STAYS[pkgId].name} sleeps ${STAYS[pkgId].guests.join("–")}. ${peso(nightlyRate(pkgId, guests))} a night for ${Math.max(guests, 10)}.`
+    : pkgId === "dayuse" ? "Price includes 4 (weekday) or 12 (weekend)" : `Up to ${kind.maxGuests}`;
 
   return (
     <>
@@ -237,8 +253,8 @@ export default function Book() {
                     >
                       <img src={p.src} alt="" className="size-20 shrink-0 rounded-2xl object-cover" />
                       <div className="min-w-0">
-                        <p className="font-medium text-night/90">{SHORT[p.id]}</p>
-                        <p className="mt-0.5 text-sm text-night/50">{FROM[p.id]}</p>
+                        <p className="font-medium text-night/90">{p.short}</p>
+                        <p className="mt-0.5 text-sm text-night/50">{p.from}</p>
                       </div>
                       <span className={`absolute right-3 top-3 grid size-6 place-items-center rounded-full transition-[background-color,transform] duration-200 ${on ? "scale-100 bg-pine text-mist" : "scale-75 bg-night/10 text-transparent"}`}>
                         <Check size={14} />
@@ -248,7 +264,7 @@ export default function Book() {
                 })}
               </div>
               <AnimatePresence initial={false}>
-                {pkgId === "overnight" && (
+                {pkgId === "lodge" && (
                   <motion.label
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
@@ -260,7 +276,7 @@ export default function Book() {
                       <input type="checkbox" checked={event} onChange={(e) => setEvent(e.target.checked)} className="size-5 accent-[var(--color-pine)]" />
                       <PartyPopper size={20} className="text-ember" aria-hidden="true" />
                       <span className="text-sm text-night/75">
-                        <b className="font-medium text-night/90">Add an event</b> with invited guests, florists or balloon stylists: {peso(7000)} venue use incl. electricity for lights & sound, {peso(500)} per non-staying guest.
+                        <b className="font-medium text-night/90">Add an event</b> with florists or balloon stylists: {peso(EVENT_FEE)} venue use, incl. power for lights and sound.
                       </span>
                     </span>
                   </motion.label>
@@ -268,7 +284,7 @@ export default function Book() {
               </AnimatePresence>
             </Step>
 
-            <Step n={2} title="Pick your dates" hint="Hatched days are already taken. The whole property goes to one group per day.">
+            <Step n={2} title="Pick your dates" hint={stay ? `Hatched nights are taken. The ${STAYS[pkgId].name} goes to one group at a time.` : "Hatched days are already taken."}>
               <StayPicker
                 key={pkgId}
                 month={thisMonth()}
@@ -277,7 +293,7 @@ export default function Book() {
                 fixedNights={kind.nights}
                 getNight={getNight}
                 cellPrice={(p) => (p ? k(p) : "")}
-                unit={pkgId === "overnight" ? "a night" : "for the day"}
+                unit={stay ? "a night" : "for the day"}
                 summary={summaryText}
                 onChange={setDates}
                 showFooter={false}
@@ -296,13 +312,62 @@ export default function Book() {
                   onChange={setKids}
                 />
                 <Stepper label="Pets" sub={`We're pet-friendly · ${peso(pkgId === "dayuse" ? 500 : 700)} each`} value={pets} max={5} onChange={setPets} />
-                {booking.event && (
-                  <Stepper label="Non-staying guests" sub={`Event guests who leave at night · ${peso(500)} each`} value={nonStaying} max={100} onChange={setNonStaying} />
+                {stay && (
+                  <Stepper label="Day visitors" sub={`Not staying the night · ${peso(VISITOR)} each, until 8pm`} value={visitors} max={100} onChange={setVisitors} />
                 )}
               </div>
             </Step>
 
-            <Step n={4} title="Your details" hint="The resort calls you to confirm. No payment is taken online in this demo.">
+            {stay && (
+              <Step n={4} title="Add extras" hint="Optional, and easier to arrange now than on the day.">
+                <div className="divide-y divide-night/10">
+                  {ADDONS.map((a) =>
+                    a.per === "each" ? (
+                      <Stepper key={a.id} label={a.name} sub={`${peso(a.price)} per ${a.unit} · ${a.note}`} value={addons[a.id] | 0} max={40} onChange={(v) => setAddon(a.id, v)} />
+                    ) : (
+                      <label key={a.id} className="flex cursor-pointer items-center justify-between gap-4 py-4">
+                        <span>
+                          <span className="block font-medium text-night/85">{a.name}</span>
+                          <span className="block text-sm text-night/50">{peso(a.price)} per group · {a.note}</span>
+                        </span>
+                        <input type="checkbox" checked={!!addons[a.id]} onChange={(e) => setAddon(a.id, e.target.checked ? 1 : 0)} className="size-5 shrink-0 accent-[var(--color-pine)]" />
+                      </label>
+                    )
+                  )}
+                </div>
+                <p className="mt-4 text-sm text-night/50">Feeding a crowd? Ask about party trays (₱2,000 – 2,300, serves 15–17) in your notes below.</p>
+              </Step>
+            )}
+
+            <section className="border-t border-night/10 py-10" aria-labelledby="know-title">
+              <h2 id="know-title" className="font-display text-3xl font-light text-pine-deep">Good to know</h2>
+              <ul className="mt-6 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+                {GOOD_TO_KNOW.map(([Icon, text]) => (
+                  <li key={text} className="flex gap-3 text-[15px] leading-snug text-night/70">
+                    <Icon size={18} className="mt-0.5 shrink-0 text-moss" aria-hidden="true" />
+                    {text}
+                  </li>
+                ))}
+              </ul>
+              {stay && (
+                <details className="faq mt-6 rounded-3xl border border-night/10 bg-white/50 px-5">
+                  <summary className="flex cursor-pointer items-center justify-between gap-4 py-4 font-medium text-night/80">
+                    What's in the kitchen, and what to bring
+                    <Plus size={18} className="plus shrink-0 text-moss" aria-hidden="true" />
+                  </summary>
+                  <div className="grid gap-6 pb-5 text-sm text-night/65 sm:grid-cols-2">
+                    {[["We provide", KITCHEN.provided], ["You bring", KITCHEN.bring]].map(([t, items]) => (
+                      <div key={t}>
+                        <p className="mb-2 font-medium text-night/80">{t}</p>
+                        <ul className="space-y-1.5">{items.map((i) => <li key={i}>{i}</li>)}</ul>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              )}
+            </section>
+
+            <Step n={stay ? 5 : 4} title="Your details" hint="The resort confirms by phone, then sends deposit details.">
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Full name" autoComplete="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} onBlur={() => setTouched({ ...touched, name: true })} error={touched.name && errors.name} />
                 <Field label="Mobile number" type="tel" inputMode="tel" autoComplete="tel" placeholder="0917 123 4567" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} onBlur={() => setTouched({ ...touched, phone: true })} error={touched.phone && errors.phone} />
@@ -310,9 +375,17 @@ export default function Book() {
                   <Field label="Email (optional)" type="email" autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} onBlur={() => setTouched({ ...touched, email: true })} error={touched.email && errors.email} />
                 </div>
                 <div className="sm:col-span-2">
-                  <Field label="Anything we should know?" rows={3} placeholder="Celebration, food pre-orders (all-day breakfast ₱240), arrival time…" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+                  <Field label="Anything we should know?" rows={3} placeholder="Celebration, tray orders, all-day breakfast (₱240), arrival time…" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
                 </div>
               </div>
+              <label className="mt-6 flex cursor-pointer items-start gap-3 text-sm text-night/70">
+                <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[var(--color-pine)]" />
+                <span>
+                  I've read and agree to the{" "}
+                  <a href="/terms" target="_blank" rel="noreferrer" className="font-medium text-pine underline decoration-pine/30 underline-offset-4 hover:decoration-pine">Terms & Conditions</a>
+                  , including the 50% deposit and the rebooking-only cancellation policy.
+                </span>
+              </label>
             </Step>
           </div>
 
@@ -320,7 +393,7 @@ export default function Book() {
             <BookingSummary pkg={pkg} booking={booking} quote={q} missing={missing} onConfirm={confirm} datesText={dates ? summaryText(dates.checkIn, dates.checkOut) : null} />
             <p className="mt-4 flex items-start gap-2 px-2 text-xs leading-relaxed text-night/45">
               <Sparkles size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
-              Demo booking: saved in this browser only, and visible in the owner dashboard. Rates are the resort's published rates; the overnight rate, extra-bed charge and 50% deposit are samples.
+              Demo booking: saved in this browser only, and visible in the owner dashboard. Nothing is charged online yet.
             </p>
           </aside>
         </div>

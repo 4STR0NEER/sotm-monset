@@ -6,7 +6,8 @@ import { peso } from "@/data/site";
 // Booking types. Colours validated as a categorical set (dataviz validate_palette: all checks pass
 // in this order); every mark also carries a text label, so colour is never the only cue.
 export const PKG = {
-  overnight: { label: "Overnight", code: "STAY", color: "#2a8458" },
+  lodge: { label: "Cabin Lodge", code: "LODGE", color: "#2a8458" },
+  chalet: { label: "Chalet", code: "CHLT", color: "#7a5a9e" },
   dayuse: { label: "Day use", code: "DAY", color: "#3f7fc4" },
   birthday: { label: "Birthday", code: "BDAY", color: "#c27f22" },
   wedding: { label: "Wedding", code: "WED", color: "#c44a66" },

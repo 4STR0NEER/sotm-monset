@@ -1,5 +1,6 @@
 import { Plus } from "lucide-react";
 import { FAQ } from "@/data/site";
+import { Link } from "@/lib/router";
 
 // <details> keeps it keyboard and screen-reader friendly for free; the open/close animation is CSS (index.css).
 export default function Faq() {
@@ -23,6 +24,10 @@ export default function Faq() {
               <p className="pb-6 leading-relaxed text-night/65">{a}</p>
             </details>
           ))}
+          <p className="pt-6 text-night/60">
+            Deposits, cancellations and house rules in full:{" "}
+            <Link to="/terms" className="font-medium text-pine underline decoration-pine/30 underline-offset-4 hover:decoration-pine">Terms & Conditions</Link>.
+          </p>
         </div>
       </div>
     </section>

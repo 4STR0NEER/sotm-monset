@@ -68,7 +68,7 @@ export default function Bonfire() {
           Signature bonfire sessions under a sky full of stars.
         </h2>
         <p className="reveal mt-8 max-w-md text-lg leading-relaxed text-fog/75">
-          The air turns cold up here at night. Pull the chairs in close and let the valley go quiet below you.
+          The air turns cold up here at night. Pull the chairs in close and let the valley go quiet below you. Marshmallows and long forks included, ₱500 for the whole group.
         </p>
       </div>
     </section>

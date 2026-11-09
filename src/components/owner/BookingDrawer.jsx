@@ -81,7 +81,7 @@ export default function BookingDrawer({ booking: b, onClose, act }) {
                 <li className="flex gap-3"><CalendarDays size={18} className="mt-0.5 text-moss" />
                   {b.package === "dayuse" ? `${fmtDate(b.checkIn, { weekday: "long", month: "long", day: "numeric" })}, 1pm – 8pm` : `${fmtDate(b.checkIn, { weekday: "short", month: "short", day: "numeric" })} – ${fmtDate(b.checkOut, { weekday: "short", month: "short", day: "numeric" })} · ${nightsOf(b)} night${nightsOf(b) > 1 ? "s" : ""}`}
                 </li>
-                <li className="flex gap-3"><Users size={18} className="mt-0.5 text-moss" />{b.guests} guests{b.kids ? `, ${b.kids} children 1–7` : ""}{b.event ? ` · event with ${b.nonStaying} non-staying` : ""}</li>
+                <li className="flex gap-3"><Users size={18} className="mt-0.5 text-moss" />{b.guests} guests{b.kids ? `, ${b.kids} children 1–7` : ""}{b.visitors ? ` · ${b.visitors} day visitors` : ""}{b.event ? " · event" : ""}</li>
                 {b.pets > 0 && <li className="flex gap-3"><PawPrint size={18} className="mt-0.5 text-moss" />{b.pets} pet{b.pets > 1 ? "s" : ""}</li>}
                 <li className="flex gap-3"><Phone size={18} className="mt-0.5 text-moss" /><a className="underline decoration-night/20 underline-offset-4" href={`tel:${b.phone}`}>{b.phone}</a></li>
                 {b.email && <li className="flex gap-3"><Mail size={18} className="mt-0.5 text-moss" /><a className="underline decoration-night/20 underline-offset-4" href={`mailto:${b.email}`}>{b.email}</a></li>}

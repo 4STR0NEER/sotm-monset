@@ -96,7 +96,7 @@ export default function Packages() {
             items={PACKAGES.map((p) => ({ id: p.id, title: SHORT[p.id], content: <Panel pkg={p} /> }))}
           />
         </div>
-        <p className="mt-6 text-center text-xs text-night/45">Swipe the card or tap a tab. Rates as published by the resort; the overnight rate is a sample.</p>
+        <p className="mt-6 text-center text-xs text-night/45">Swipe the card or tap a tab. Deposit, cancellation and house rules are in the <Link to="/terms" className="underline underline-offset-4">Terms &amp; Conditions</Link>.</p>
       </div>
     </section>
   );

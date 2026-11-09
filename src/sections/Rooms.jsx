@@ -1,5 +1,8 @@
+import { useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import Postcards from "@/components/Postcards";
-import { ROOM } from "@/data/site";
+import { Link } from "@/lib/router";
+import { RATE_TIERS, STAYS, peso } from "@/data/site";
 
 // The rooms as postcards left on the long wooden table (components/Postcards.jsx).
 // The section itself is the table: dark timber grain under a warm pool of light.
@@ -13,26 +16,62 @@ const WOOD = {
   ].join(","),
 };
 
+// Two stays, one switch. The copy cross-fades through a slight blur (it reads as one thing changing,
+// not two swapping); the postcard pile is re-dealt for the chosen stay.
 export default function Rooms() {
+  const [id, setId] = useState("lodge");
+  const stay = STAYS[id];
   return (
     <section id="rooms" className="grain relative overflow-hidden px-4 py-28 text-mist sm:px-8 md:py-36" style={WOOD}>
       <div className="mx-auto grid max-w-7xl items-center gap-16 lg:grid-cols-[1fr_1.35fr]">
         <div>
           <p className="stamp mb-5 text-xs text-lantern">Where you'll sleep</p>
           <h2 data-split className="font-display text-[clamp(2.4rem,5.5vw,5rem)] font-light leading-[1]">
-            {ROOM.name}
+            Two places, each yours alone.
           </h2>
-          <p className="reveal mt-6 max-w-md text-lg leading-relaxed text-fog/75">{ROOM.blurb}</p>
-          <dl data-stagger className="mt-10 max-w-md">
-            {ROOM.specs.map(([k, v]) => (
-              <div key={k} className="flex items-baseline justify-between gap-6 border-b border-mist/10 py-3.5">
-                <dt className="stamp text-xs text-fog/45">{k}</dt>
-                <dd className="text-right text-fog/85">{v}</dd>
-              </div>
+          <div role="tablist" aria-label="Stays" className="reveal mt-8 inline-flex rounded-full bg-mist/[0.07] p-1">
+            {Object.values(STAYS).map((s) => (
+              <button
+                key={s.id}
+                role="tab"
+                aria-selected={s.id === id}
+                onClick={() => setId(s.id)}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition-[background-color,color,transform] duration-200 ease-[var(--ease-out)] active:scale-[0.97] ${
+                  s.id === id ? "bg-lantern text-night" : "text-fog/70 hover:text-mist"
+                }`}
+              >
+                {s.name}
+              </button>
             ))}
-          </dl>
+          </div>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={id}
+              role="tabpanel"
+              initial={{ opacity: 0, filter: "blur(4px)" }}
+              animate={{ opacity: 1, filter: "blur(0px)" }}
+              exit={{ opacity: 0, filter: "blur(4px)", transition: { duration: 0.12 } }}
+              transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+            >
+              <p className="mt-6 max-w-md text-lg leading-relaxed text-fog/75">{stay.blurb}</p>
+              <dl className="mt-8 max-w-md">
+                {stay.specs.map(([k, v]) => (
+                  <div key={k} className="flex items-baseline justify-between gap-6 border-b border-mist/10 py-3.5">
+                    <dt className="stamp text-xs text-fog/45">{k}</dt>
+                    <dd className="text-right text-fog/85">{v}</dd>
+                  </div>
+                ))}
+              </dl>
+              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+                <Link to={`/book?package=${id}`} className="rounded-full bg-lantern px-6 py-3 font-semibold text-night transition-transform duration-150 ease-[var(--ease-out)] active:scale-[0.97]">
+                  Book the {stay.name}
+                </Link>
+                <span className="text-sm text-fog/60">From {peso(RATE_TIERS[0][1])} a night for 10</span>
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
-        <Postcards cards={ROOM.postcards} />
+        <Postcards key={id} cards={stay.postcards} />
       </div>
     </section>
   );
