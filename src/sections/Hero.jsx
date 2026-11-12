@@ -52,7 +52,7 @@ export default function Hero({ ready }) {
         </h1>
         <div className="mt-10 flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
           <p data-in className="max-w-md text-base leading-relaxed text-fog/85 opacity-0 sm:text-lg">
-            An exclusive mountain retreat {RESORT.driveFromCity} from Cebu City, overlooking Mt. Manunggal. Two private stays, each to one group at a time.
+            An exclusive mountain retreat {RESORT.driveFromCity} from Cebu City, overlooking Mt. Manunggal. Three private stays, each to one group at a time.
           </p>
           <div data-in className="flex flex-wrap gap-3 opacity-0">
             <Link to="/book" className="rounded-full bg-lantern px-7 py-3.5 font-semibold text-night transition-transform duration-150 ease-[var(--ease-out)] active:scale-[0.97]">

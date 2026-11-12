@@ -14,7 +14,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.119.0";
 const OWNER = "sermononthemount.ph@gmail.com";
 const SITE = Deno.env.get("SITE_URL") ?? "https://sotmretreatresort.com"; // optional secret: the live site's URL
 const NAMES: Record<string, string> = {
-  lodge: "Cabin Lodge", chalet: "Upper Room Chalet", dayuse: "Day use",
+  lodge: "Cabin Lodge", chalet: "Upper Room Chalet", treehouse: "Treehouse", dayuse: "Day use",
   birthday: "Birthday package", wedding: "Intimate wedding",
 };
 const cors = {

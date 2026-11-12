@@ -24,7 +24,7 @@ export default function Footer() {
           </nav>
           <p className="text-xs leading-relaxed sm:text-right">
             Concept site by Monset. Photos © {RESORT.name}. Video: Mixkit.<br />
-            Components: <a href="https://skiper-ui.com" className="underline hover:text-mist">Skiper UI</a>, <a href="https://kokonutui.com" className="underline hover:text-mist">Kokonut UI</a>.
+            Components: <a href="https://skiper-ui.com" rel="nofollow" className="underline hover:text-mist">Skiper UI</a>, <a href="https://kokonutui.com" rel="nofollow" className="underline hover:text-mist">Kokonut UI</a>.
           </p>
         </div>
       </div>

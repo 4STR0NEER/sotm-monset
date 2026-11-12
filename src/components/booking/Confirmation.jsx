@@ -6,7 +6,7 @@ import { Link } from "@/lib/router";
 import { ONLINE_PAYMENTS, MANUAL_METHODS, depositCheckoutUrl } from "@/lib/payments";
 import { BOOKABLE, RESORT, peso } from "@/data/site";
 
-const CODE = { lodge: "LODGE", chalet: "CHALET", dayuse: "DAY", birthday: "BDAY", wedding: "WED" };
+const CODE = { lodge: "LODGE", chalet: "CHALET", treehouse: "TREE", dayuse: "DAY", birthday: "BDAY", wedding: "WED" };
 
 // Pays online when PayMongo is switched on (lib/payments.js); otherwise says how it's done today.
 function PayDeposit({ booking }) {

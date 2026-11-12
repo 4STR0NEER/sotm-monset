@@ -4,13 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0d1712" />
-    <title>Sermon on the Mount Retreat Resort · Balamban, Cebu</title>
-    <meta name="description" content="An exclusive mountain retreat 816 m above sea level in Balamban, Cebu, overlooking Mt. Manunggal. Book the whole property for your group, day use, birthdays and intimate weddings." />
+    <title>Sermon on the Mount · Private Mountain Resort in Balamban, Cebu</title>
+    <meta name="description" content="An exclusive mountain retreat 816 m up in Balamban, Cebu, 1 hr 15 min from Cebu City." />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://sotmretreatresort.com/" />
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="preload" as="image" href="/video/hero-fog.jpg" />
+    <!--head-->
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><!--app--></div>
+    <script>
+      // The dashboard subdomain gets the same HTML as the website: clear the pre-rendered page before it paints.
+      if (location.hostname.indexOf("dashboard.") === 0) document.getElementById("root").innerHTML = "";
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

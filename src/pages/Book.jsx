@@ -128,7 +128,7 @@ export default function Book() {
   const [addons, setAddons] = useState({});
   const [agreed, setAgreed] = useState(false);
   const [dates, setDates] = useState(null);
-  const [guests, setGuests] = useState(10);
+  const [guests, setGuests] = useState(() => Math.min(10, KINDS[asked]?.maxGuests ?? 10));
   const [kids, setKids] = useState(0);
   const [pets, setPets] = useState(0);
   const [form, setForm] = useState({ name: "", phone: "", email: "", notes: "" });
@@ -185,7 +185,7 @@ export default function Book() {
   };
 
   const summaryText = (a, b) => {
-    if (!a) return { lodge: "Pick a check-in night", chalet: "Pick a check-in night", dayuse: "Pick your day", birthday: "Pick the party date", wedding: "Pick your wedding day" }[pkgId];
+    if (!a) return stay ? "Pick a check-in night" : { dayuse: "Pick your day", birthday: "Pick the party date", wedding: "Pick your wedding day" }[pkgId];
     if (!b) return `Check-in ${fmt(a)}. Now pick check-out`;
     if (pkgId === "dayuse") return `${fmt(a)} · 1pm – 8pm · ${isWeekendDay(a) ? "weekend" : "weekday"} rate`;
     const n = Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
@@ -213,7 +213,7 @@ export default function Book() {
 
   const pkg = BOOKABLE[pkgId];
   const guestLabel = stay
-    ? `${STAYS[pkgId].name} sleeps ${STAYS[pkgId].guests.join("–")}. ${peso(nightlyRate(pkgId, guests))} a night for ${Math.max(guests, 10)}.`
+    ? `${STAYS[pkgId].name} sleeps ${STAYS[pkgId].guests.join("–")}. ${peso(nightlyRate(pkgId, guests))} a night for ${Math.max(guests, STAYS[pkgId].guests[0])}.`
     : pkgId === "dayuse" ? "Price includes 4 (weekday) or 12 (weekend)" : `Up to ${kind.maxGuests}`;
 
   return (

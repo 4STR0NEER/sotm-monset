@@ -24,12 +24,12 @@ export default function Exclusive() {
         <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-center">
           <div className="sticky top-0 flex h-screen items-center justify-center px-6">
             <div className="rounded-[2rem] bg-night/55 px-8 py-10 text-center text-mist backdrop-blur-md md:px-14 md:py-14">
-              <p className="stamp mb-5 text-xs text-lantern">Two private stays · groups of 10 or more</p>
+              <p className="stamp mb-5 text-xs text-lantern">Three private stays · from 2 to 40 guests</p>
               <h2 id="exclusive-title" className="max-w-[16ch] font-display text-[clamp(2.2rem,5vw,4.5rem)] font-light leading-[1.02]">
                 Once booked, <em>your place</em> is yours alone.
               </h2>
               <p className="mx-auto mt-6 max-w-sm text-fog/75">
-                A lodge with a pool and sauna, a chalet with a hot tub, each to one group at a time. No walk-ins.
+                A lodge with a pool and sauna, a chalet with a hot tub, a treehouse for two to five, each to one group at a time. No walk-ins.
               </p>
             </div>
           </div>

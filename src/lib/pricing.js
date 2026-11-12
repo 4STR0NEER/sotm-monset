@@ -21,14 +21,16 @@ export const DEPOSIT_RATE = 0.5;
 export const KINDS = {
   lodge: { nights: null, minNights: 1, maxGuests: STAYS.lodge.guests[1] },
   chalet: { nights: null, minNights: 1, maxGuests: STAYS.chalet.guests[1] },
+  treehouse: { nights: null, minNights: 1, maxGuests: STAYS.treehouse.guests[1] },
   dayuse: { nights: 1, maxGuests: DAY_MAX },
   birthday: { nights: 1, maxGuests: 30 },
   wedding: { nights: 2, maxGuests: WEDDING_MAX },
 };
-export const isStay = (id) => id === "lodge" || id === "chalet";
-// Which accommodation a booking occupies. Day use and functions run at the Cabin Lodge (pool, deck).
+export const isStay = (id) => id in STAYS;
+// Which accommodation a booking occupies (mirrors bookings.unit in the database).
+// Day use and functions run at the Cabin Lodge (pool, deck).
 // ponytail: assumption until the owner confirms where day use / events happen.
-export const unitOf = (id) => (id === "chalet" ? "chalet" : "lodge");
+export const unitOf = (id) => (id === "chalet" || id === "treehouse" ? id : "lodge");
 
 const dow = (iso) => new Date(iso + "T00:00:00Z").getUTCDay(); // 0 Sun … 6 Sat
 export const isWeekendDay = (iso) => ![1, 2, 3, 4].includes(dow(iso));
@@ -52,7 +54,7 @@ export function quote(b) {
   if (isStay(b.package)) {
     const n = b.checkIn && b.checkOut ? nightsBetween(b.checkIn, b.checkOut) : 0;
     const stay = STAYS[b.package];
-    add(`${stay.name}, ${s(Math.max(guests, 10), "guest")} × ${s(n, "night")}`, nightlyRate(b.package, guests) * n);
+    add(`${stay.name}, ${s(Math.max(guests, stay.guests[0]), "guest")} × ${s(n, "night")}`, nightlyRate(b.package, guests) * n);
     add(s(pets, "pet") + " (cleaning fee)", pets * PET_OVERNIGHT);
     add(s(b.visitors | 0, "day visitor"), (b.visitors | 0) * VISITOR);
     if (b.event) add("Event venue use", EVENT_FEE);

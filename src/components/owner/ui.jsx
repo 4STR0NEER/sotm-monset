@@ -8,6 +8,7 @@ import { peso } from "@/data/site";
 export const PKG = {
   lodge: { label: "Cabin Lodge", code: "LODGE", color: "#2a8458" },
   chalet: { label: "Chalet", code: "CHLT", color: "#7a5a9e" },
+  treehouse: { label: "Treehouse", code: "TREE", color: "#8a6a2f" },
   dayuse: { label: "Day use", code: "DAY", color: "#3f7fc4" },
   birthday: { label: "Birthday", code: "BDAY", color: "#c27f22" },
   wedding: { label: "Wedding", code: "WED", color: "#c44a66" },

@@ -38,8 +38,8 @@ function Postmark() {
 
 function Card({ card, n, depth, total, top, flipped, onFlip, onSent, sendRef }) {
   const x = useMotionValue(0);
-  const rotate = useTransform(x, (v) => TILT[n] + v / 22);
-  const [ox, oy] = OFFSET[n];
+  const rotate = useTransform(x, (v) => TILT[n % TILT.length] + v / 22);
+  const [ox, oy] = OFFSET[n % OFFSET.length]; // positions repeat past six cards
 
   // fling it off the table, then slide it back in under the pile
   const send = async (dir = 1) => {

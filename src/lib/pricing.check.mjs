@@ -17,6 +17,12 @@ assert.equal(nightlyRate("lodge", 24), 29000);
 assert.equal(nightlyRate("lodge", 28), 33000);
 assert.equal(nightlyRate("lodge", 40), 45000);
 
+// Treehouse: ₱6,000 for 2, ₱1,000 per extra guest, max 5
+assert.equal(nightlyRate("treehouse", 1), 6000);
+assert.equal(nightlyRate("treehouse", 2), 6000);
+assert.equal(nightlyRate("treehouse", 5), 9000);
+assert.equal(quote({ package: "treehouse", checkIn: "2026-11-09", checkOut: "2026-11-11", guests: 3 }).total, 7000 * 2);
+
 // Overnight × nights + pets ₱700 + day visitors ₱500 + extras
 const o = quote({
   package: "lodge", checkIn: "2026-11-09", checkOut: "2026-11-11", guests: 24, pets: 1, visitors: 3,

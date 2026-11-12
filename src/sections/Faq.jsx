@@ -12,7 +12,7 @@ export default function Faq() {
           <h2 data-split className="font-display text-[clamp(2.4rem,5vw,4.5rem)] font-light leading-[1] text-pine-deep">
             Before you drive up.
           </h2>
-          <img src="/img/dogfriendlyfortrekking.webp" alt="A dog leading the way up the trail" loading="lazy" className="reveal mt-10 hidden aspect-[3/4] w-56 rounded-3xl object-cover md:block" />
+          <img src="/img/deck-morning-guests.webp" alt="Guests relaxing on the view deck on a clear mountain morning" loading="lazy" className="reveal mt-10 hidden aspect-[3/4] w-56 rounded-3xl object-cover md:block" />
         </div>
         <div data-stagger className="border-t border-night/10">
           {FAQ.map(([q, a]) => (

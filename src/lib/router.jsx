@@ -9,8 +9,11 @@ const listeners = new Set();
 const subscribe = (fn) => (listeners.add(fn), () => listeners.delete(fn));
 const emit = () => listeners.forEach((fn) => fn());
 
-export const usePath = () => useSyncExternalStore(subscribe, () => location.pathname);
-export const useSearch = () => useSyncExternalStore(subscribe, () => location.search);
+// At build time (scripts/prerender.mjs) there is no browser: pages render for this path instead.
+let serverPath = "/";
+export const setServerPath = (p) => (serverPath = p);
+export const usePath = () => useSyncExternalStore(subscribe, () => location.pathname, () => serverPath);
+export const useSearch = () => useSyncExternalStore(subscribe, () => location.search, () => "");
 
 function transition(update) {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -34,7 +37,7 @@ export function navigate(to) {
   });
 }
 
-addEventListener("popstate", () => transition(emit));
+if (typeof window !== "undefined") addEventListener("popstate", () => transition(emit));
 
 // <a> that navigates in-app; modified clicks (new tab etc.) still behave like normal links
 export function Link({ to, onClick, ...props }) {

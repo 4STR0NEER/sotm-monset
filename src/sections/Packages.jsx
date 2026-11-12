@@ -53,7 +53,7 @@ function Panel({ pkg }) {
   return (
     <div className="grid gap-0 overflow-hidden rounded-[2rem] bg-white/60 md:grid-cols-[1fr_1.1fr]">
       <div className="relative h-64 md:h-auto">
-        <img src={pkg.src} alt="" loading="lazy" draggable="false" className="absolute inset-0 h-full w-full object-cover" />
+        <img src={pkg.src} alt={pkg.name} loading="lazy" draggable="false" className="absolute inset-0 h-full w-full object-cover" />
       </div>
       <div className="flex flex-col gap-7 p-7 md:p-12">
         <h3 className="font-display text-3xl italic text-night/80">{pkg.name}</h3>
