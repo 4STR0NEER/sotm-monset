@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { CalendarDays, ExternalLink, HandCoins, KeyRound, LayoutGrid, ListChecks, LogOut, Receipt, Users } from "lucide-react";
+import { CalendarDays, Download, ExternalLink, HandCoins, KeyRound, LayoutGrid, ListChecks, LogOut, Receipt, Users } from "lucide-react";
 import Overview from "@/components/owner/Overview";
 import BookingsTable from "@/components/owner/BookingsTable";
 import OwnerCalendar from "@/components/owner/OwnerCalendar";
@@ -30,7 +30,39 @@ const ALL_TABS = [
 ];
 const STAFF_TABS = ["bookings", "calendar"];
 
+// The dashboard installs as an app (phone home screen, laptop dock). The manifest is only linked
+// here, so guests browsing the website don't get offered an install of the staff dashboard.
+const HEAD = [
+  ["link", { rel: "manifest", href: "/manifest.webmanifest" }],
+  ["link", { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" }],
+  ["meta", { name: "apple-mobile-web-app-capable", content: "yes" }],
+  ["meta", { name: "apple-mobile-web-app-title", content: "SOTM" }],
+  ["meta", { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" }],
+];
+let installEvent = null; // Chrome/Edge hand this over once the app is installable
+addEventListener("beforeinstallprompt", (e) => (e.preventDefault(), (installEvent = e), dispatchEvent(new Event("sotm-installable"))));
+
+function useInstall() {
+  const [ready, setReady] = useState(!!installEvent);
+  useEffect(() => {
+    const on = () => setReady(true);
+    addEventListener("sotm-installable", on);
+    return () => removeEventListener("sotm-installable", on);
+  }, []);
+  if (!ready) return null;
+  return async () => {
+    installEvent.prompt();
+    await installEvent.userChoice;
+    installEvent = null;
+    setReady(false);
+  };
+}
+
 export default function Owner() {
+  useEffect(() => {
+    const els = HEAD.map(([tag, attrs]) => document.head.appendChild(Object.assign(document.createElement(tag), attrs)));
+    return () => els.forEach((el) => el.remove());
+  }, []);
   const [auth, setAuth] = useState(undefined); // undefined while checking, null signed out, else { email, role }
   useEffect(() => {
     if (!supabase) return setAuth(null);
@@ -54,6 +86,7 @@ export default function Owner() {
 }
 
 function Dashboard({ email, role }) {
+  const install = useInstall();
   const TABS = role === "admin" ? ALL_TABS : ALL_TABS.filter(([id]) => STAFF_TABS.includes(id));
   const bookings = useBookings();
   const [tab, setTab] = useState(TABS[0][0]);
@@ -105,6 +138,11 @@ function Dashboard({ email, role }) {
           ))}
         </nav>
         <div className="flex items-center gap-2 lg:mt-auto lg:flex-col lg:items-stretch">
+          {install && (
+            <button onClick={install} className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-lantern hover:text-mist">
+              <Download size={16} /> <span className="hidden sm:inline">Install app</span>
+            </button>
+          )}
           <Link to="/" className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-fog/70 hover:text-mist"><ExternalLink size={16} /> <span className="hidden sm:inline">View website</span></Link>
           <button
             onClick={() => supabase.auth.signOut()}
