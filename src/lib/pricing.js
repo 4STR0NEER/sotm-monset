@@ -31,6 +31,9 @@ export const isStay = (id) => id in STAYS;
 // Day use and functions run at the Cabin Lodge (pool, deck).
 // ponytail: assumption until the owner confirms where day use / events happen.
 export const unitOf = (id) => (id === "chalet" || id === "treehouse" ? id : "lodge");
+// Two units can't share a night if they're the same, or either is the Treehouse (it books the whole resort).
+// Mirrors bookings.spot in the database.
+export const clashes = (a, b) => a === b || a === "treehouse" || b === "treehouse";
 
 const dow = (iso) => new Date(iso + "T00:00:00Z").getUTCDay(); // 0 Sun … 6 Sat
 export const isWeekendDay = (iso) => ![1, 2, 3, 4].includes(dow(iso));

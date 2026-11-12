@@ -1,6 +1,6 @@
 // node src/lib/pricing.check.mjs — fails loudly if a published rate stops pricing right.
 import assert from "node:assert/strict";
-import { quote, isWeekendDay } from "./pricing.js";
+import { quote, isWeekendDay, clashes } from "./pricing.js";
 import { nightlyRate } from "../data/site.js";
 
 // 2026-11-09 is a Monday, 2026-11-13 a Friday, 2026-11-14 a Saturday
@@ -42,5 +42,9 @@ assert.equal(quote({ package: "birthday", checkIn: "2026-11-09" }).onRequest, tr
 
 // No dates yet: no charges
 assert.equal(quote({ package: "chalet", guests: 15, pets: 2 }).lines.length, 0);
+
+// The Treehouse books the whole resort; Lodge and Chalet can share a night
+assert.ok(clashes("treehouse", "lodge") && clashes("chalet", "treehouse") && clashes("lodge", "lodge"));
+assert.ok(!clashes("lodge", "chalet"));
 
 console.log("pricing ok");

@@ -2,7 +2,7 @@
 // Guests can only file requests and read which nights are taken; the signed-in owner reads and
 // edits everything. Nothing else in the app talks to the database about bookings.
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { quote, unitOf } from "./pricing.js";
+import { quote, unitOf, clashes } from "./pricing.js";
 import { supabase } from "./supabase.js";
 
 const DAY = 86_400_000;
@@ -15,11 +15,11 @@ const BACK = Object.fromEntries(Object.entries(COLS).map(([a, b]) => [b, a]));
 const toRow = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [COLS[k] ?? k, v]));
 const fromRow = (r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [BACK[k] ?? k, v]));
 
-/** Nights (YYYY-MM-DD) a stay is taken. Works on full bookings or booked_ranges() rows. No unit = either stay. */
+/** Nights (YYYY-MM-DD) a stay is taken. Works on full bookings or booked_ranges() rows. No unit = any stay. */
 export function takenDates(list, unit) {
   const set = new Set();
   for (const b of list) {
-    if (b.status === "cancelled" || (unit && (b.unit ?? unitOf(b.package)) !== unit)) continue;
+    if (b.status === "cancelled" || (unit && !clashes(b.unit ?? unitOf(b.package), unit))) continue;
     for (let t = Date.parse(b.checkIn); t < Date.parse(b.checkOut); t += DAY) set.add(iso(t));
   }
   return set;

@@ -11,6 +11,7 @@ import { KINDS, quote, isStay, unitOf, isWeekendDay, DAY_WEEKDAY, DAY_WEEKEND, V
 import { ADDONS, BOOKABLE, KITCHEN, RESORT, STAYS, nightlyRate, peso } from "@/data/site";
 
 const CHOICES = Object.entries(BOOKABLE).map(([id, c]) => ({ id, ...c }));
+const EVENTS = ["birthday", "wedding"]; // booked as events: guests are asked to call first
 
 // What a guest must know before paying, in one glance. The full rules live on /terms.
 const GOOD_TO_KNOW = [
@@ -216,6 +217,31 @@ export default function Book() {
     ? `${STAYS[pkgId].name} sleeps ${STAYS[pkgId].guests.join("–")}. ${peso(nightlyRate(pkgId, guests))} a night for ${Math.max(guests, STAYS[pkgId].guests[0])}.`
     : pkgId === "dayuse" ? "Price includes 4 (weekday) or 12 (weekend)" : `Up to ${kind.maxGuests}`;
 
+  const choice = (p) => {
+    const on = p.id === pkgId;
+    return (
+      <button
+        key={p.id}
+        type="button"
+        role="radio"
+        aria-checked={on}
+        onClick={() => choosePackage(p.id)}
+        className={`group relative flex items-center gap-4 overflow-hidden rounded-3xl border p-3 text-left transition-[border-color,background-color,transform] duration-200 ease-[var(--ease-out)] active:scale-[0.98] ${
+          on ? "border-pine bg-white" : "border-night/10 bg-white/40 hover:border-night/30"
+        }`}
+      >
+        <img src={p.src} alt="" className="size-20 shrink-0 rounded-2xl object-cover" />
+        <div className="min-w-0">
+          <p className="font-medium text-night/90">{p.short}</p>
+          <p className="mt-0.5 text-sm text-night/50">{p.from}</p>
+        </div>
+        <span className={`absolute right-3 top-3 grid size-6 place-items-center rounded-full transition-[background-color,transform] duration-200 ${on ? "scale-100 bg-pine text-mist" : "scale-75 bg-night/10 text-transparent"}`}>
+          <Check size={14} />
+        </span>
+      </button>
+    );
+  };
+
   return (
     <>
       <header className="grain relative flex h-[52vh] min-h-[380px] items-end overflow-hidden bg-night text-mist">
@@ -244,31 +270,14 @@ export default function Book() {
         <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1.35fr_1fr] lg:gap-16">
           <div data-stagger>
             <Step n={1} title="Choose your stay">
-              <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Package">
-                {CHOICES.map((p) => {
-                  const on = p.id === pkgId;
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={on}
-                      onClick={() => choosePackage(p.id)}
-                      className={`group relative flex items-center gap-4 overflow-hidden rounded-3xl border p-3 text-left transition-[border-color,background-color,transform] duration-200 ease-[var(--ease-out)] active:scale-[0.98] ${
-                        on ? "border-pine bg-white" : "border-night/10 bg-white/40 hover:border-night/30"
-                      }`}
-                    >
-                      <img src={p.src} alt="" className="size-20 shrink-0 rounded-2xl object-cover" />
-                      <div className="min-w-0">
-                        <p className="font-medium text-night/90">{p.short}</p>
-                        <p className="mt-0.5 text-sm text-night/50">{p.from}</p>
-                      </div>
-                      <span className={`absolute right-3 top-3 grid size-6 place-items-center rounded-full transition-[background-color,transform] duration-200 ${on ? "scale-100 bg-pine text-mist" : "scale-75 bg-night/10 text-transparent"}`}>
-                        <Check size={14} />
-                      </span>
-                    </button>
-                  );
-                })}
+              <div role="radiogroup" aria-label="Package">
+                <div className="grid gap-3 sm:grid-cols-2">{CHOICES.filter((p) => !EVENTS.includes(p.id)).map(choice)}</div>
+                <p className="stamp mt-8 text-xs text-night/50">Events</p>
+                <p className="mb-4 mt-2 text-sm text-night/60">
+                  Weddings and birthdays are booked as events. Please call us first on{" "}
+                  <a href={RESORT.phoneHref} className="font-medium text-pine underline underline-offset-2">{RESORT.phone}</a> so we can plan the day with you.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">{CHOICES.filter((p) => EVENTS.includes(p.id)).map(choice)}</div>
               </div>
               <AnimatePresence initial={false}>
                 {pkgId === "lodge" && (

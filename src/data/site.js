@@ -31,8 +31,8 @@ export const STORY = {
   verse: { text: "Blessed are those who mourn, for they will be comforted.", ref: "Matthew 5:4" }, // painted on the room wall
 };
 
-// Three private stays, each to one group at a time. Lodge and Chalet guests can't use each other's
-// pool, sauna or hot tub. Rate tiers: 10 and 15 guests at both, 24/30/40 at the Cabin Lodge only.
+// Three private stays, each to one group at a time. Lodge and Chalet can host two groups on the same
+// night, who can't use each other's pool, sauna or hot tub. A Treehouse booking takes the whole resort. Rate tiers: 10 and 15 guests at both, 24/30/40 at the Cabin Lodge only.
 // The Treehouse has a flat rate instead (`rate`, for its minimum guests) plus EXTRA_HEAD per extra guest.
 export const RATE_TIERS = [[10, 14500], [15, 19500], [24, 29000], [30, 35000], [40, 45000]];
 export const EXTRA_HEAD = 1000; // per guest above a tier
@@ -83,13 +83,13 @@ export const STAYS = {
   treehouse: {
     id: "treehouse",
     name: "Treehouse",
-    blurb: "A small hideaway for two to five, with driftwood bunks and a balcony table looking straight across the valley.",
+    blurb: "A hideaway for two to five with the whole resort to yourselves: pool, sauna, hot tub and kitchen, plus driftwood bunks and a balcony table over the valley.",
     guests: [2, 5],
     rate: 6000, // for 2 guests, + EXTRA_HEAD each up to 5 (owner, Nov 2026)
-    // ponytail: which shared facilities (pool, sauna, kitchen) Treehouse guests may use is not confirmed yet
     specs: [
       ["Guests", "2 – 5"],
       ["Rate", "₱6,000 for 2, ₱1,000 per extra guest"],
+      ["Exclusive", "The whole resort: pool, sauna, hot tub, kitchen"],
       ["Beds", "Driftwood bunk beds"],
       ["View", "Balcony with a dining table over the valley"],
     ],
@@ -257,12 +257,12 @@ export const PACKAGES = [
   },
 ];
 
-// What a guest can pick on /book, in order.
+// What a guest can pick on /book, in order: the four stays by price, then events (birthday, wedding).
 export const BOOKABLE = {
+  dayuse: { name: "Day use", short: "Day use, 1pm – 8pm", from: "from ₱4,500", src: "/img/pool-view.webp" },
+  treehouse: { name: "Treehouse", short: "Treehouse", from: "2–5 guests · from ₱6,000 a night", src: "/img/treehouse-balcony.webp" },
   lodge: { name: "Cabin Lodge", short: "Cabin Lodge", from: "10–40 guests · from ₱14,500 a night", src: "/img/pool-view-3.webp" },
   chalet: { name: "Upper Room Chalet", short: "Upper Room Chalet", from: "10–15 guests · from ₱14,500 a night", src: "/img/chalet-hot-tub.webp" },
-  treehouse: { name: "Treehouse", short: "Treehouse", from: "2–5 guests · from ₱6,000 a night", src: "/img/treehouse-balcony.webp" },
-  dayuse: { name: "Day use", short: "Day use, 1pm – 8pm", from: "from ₱4,500", src: "/img/pool-view.webp" },
   birthday: { name: "Birthday package", short: "Birthday package", from: "price on request", src: "/img/birthdaycelebrationonthewooddeck.webp" },
   wedding: { name: "Intimate wedding", short: "Intimate wedding", from: "₱90,000 all-in", src: "/img/weddingbouquet.webp" },
 };
@@ -279,8 +279,8 @@ export const REVIEWS = [
 // Short answers only: the full rules live on /terms.
 export const FAQ = [
   ["What are the check-in and check-out times?", "Check-in is 2pm, check-out 11am. Early check-in (from 8am) or late check-out (until 5pm) can be arranged for a fee, if the dates allow."],
-  ["How do the stays work?", "There are three, each fully private to one group. The Cabin Lodge (10–40 guests) has the pool and sauna; the Upper Room Chalet (10–15) has the hot tub; the Treehouse is a hideaway for 2–5. Lodge and Chalet groups can't use each other's place."],
-  ["How much is the Treehouse?", "₱6,000 a night for two, plus ₱1,000 per extra guest, up to five guests (₱9,000 for five)."],
+  ["How do the stays work?", "There are three, each fully private to one group. The Cabin Lodge (10–40 guests) has the pool and sauna; the Upper Room Chalet (10–15) has the hot tub; the Treehouse is a hideaway for 2–5 that books the whole resort, every amenity included. Lodge and Chalet groups can't use each other's place."],
+  ["How much is the Treehouse?", "₱6,000 a night for two, plus ₱1,000 per extra guest, up to five guests (₱9,000 for five). The whole resort is yours: pool, sauna, hot tub and kitchen."],
   ["How do we reserve?", "Reservations only, first come, first served. A 50% deposit holds your date and the balance is due a few days before you arrive. Deposits aren't refunded, but you can rebook."],
   ["Is food included?", "No, we're self-catering: bring your own and cook in the full kitchen, with no corkage fee. You can also pre-order Balamban lechon (₱10,000, delivered), party trays or all-day breakfast (₱240)."],
   ["What should we pack?", "Towels (or rent ours at ₱75), toothbrushes, sweaters for the cold, and proper swimwear: no cotton, denim or wool in the pool or hot tub. Shampoo, conditioner, body soap and hair dryers are provided."],
