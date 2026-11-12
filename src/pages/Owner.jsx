@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { CalendarDays, Download, ExternalLink, HandCoins, KeyRound, LayoutGrid, ListChecks, LogOut, Receipt, Users } from "lucide-react";
+import { CalendarDays, Download, Plus, ExternalLink, HandCoins, KeyRound, LayoutGrid, ListChecks, LogOut, Receipt, Users } from "lucide-react";
 import Overview from "@/components/owner/Overview";
 import BookingsTable from "@/components/owner/BookingsTable";
 import OwnerCalendar from "@/components/owner/OwnerCalendar";
 import BookingDrawer from "@/components/owner/BookingDrawer";
+import NewBooking from "@/components/owner/NewBooking";
 import StaffTab from "@/components/owner/StaffTab";
 import ExpensesTab from "@/components/owner/ExpensesTab";
 import PayrollTab from "@/components/owner/PayrollTab";
@@ -92,6 +93,8 @@ function Dashboard({ email, role }) {
   const [tab, setTab] = useState(TABS[0][0]);
   const [filter, setFilter] = useState("all");
   const [openId, setOpenId] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const closeAdd = useCallback(() => setAdding(false), []);
   const [toast, setToast] = useState(null);
   const timer = useRef();
   const opened = bookings.find((b) => b.id === openId) ?? null;
@@ -162,6 +165,11 @@ function Dashboard({ email, role }) {
             </h1>
             <p className="mt-1 text-sm text-night/55">{fmtDate(today(), { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</p>
           </div>
+          {["overview", "bookings", "calendar"].includes(tab) && (
+            <button onClick={() => setAdding(true)} className="inline-flex items-center gap-2 rounded-full bg-pine px-5 py-2.5 text-sm font-semibold text-mist transition-[background-color,transform] duration-150 hover:bg-pine-deep active:scale-[0.97]">
+              <Plus size={16} aria-hidden="true" /> New booking
+            </button>
+          )}
           {/* tabs for phones and tablets; the sidebar has them on desktop */}
           <div className="-mx-1 flex max-w-full gap-1 overflow-x-auto rounded-full bg-white/70 p-1 lg:hidden" role="tablist">
             {TABS.map(([id, label]) => (
@@ -193,6 +201,12 @@ function Dashboard({ email, role }) {
       </div>
 
       <BookingDrawer booking={opened} onClose={close} act={act} />
+      <NewBooking
+        open={adding}
+        onClose={closeAdd}
+        bookings={bookings}
+        onCreated={(id, name) => (setAdding(false), setOpenId(id), notify(`Booking for ${name} added · ${id}`))}
+      />
 
       <div className="pointer-events-none fixed inset-x-0 bottom-5 z-[70] flex justify-center px-4" aria-live="polite">
         <AnimatePresence>

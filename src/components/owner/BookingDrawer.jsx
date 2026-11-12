@@ -74,7 +74,7 @@ export default function BookingDrawer({ booking: b, onClose, act }) {
             <div className="flex-1 space-y-7 p-6">
               <div className="flex items-center justify-between">
                 <StatusBadge status={b.status} />
-                <span className="text-xs text-night/45">Requested {fmtDate(b.createdAt.slice(0, 10), { month: "short", day: "numeric", year: "numeric" })} · {b.source === "web" ? "website" : "sample"}</span>
+                <span className="text-xs text-night/45">Requested {fmtDate(b.createdAt.slice(0, 10), { month: "short", day: "numeric", year: "numeric" })} · {{ web: "website", manual: "added in dashboard" }[b.source] ?? b.source}</span>
               </div>
 
               <ul className="space-y-3 text-night/80">

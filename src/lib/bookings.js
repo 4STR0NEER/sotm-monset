@@ -54,20 +54,24 @@ export async function createBooking(input) {
     kids: input.kids | 0, pets: input.pets | 0, visitors: input.visitors | 0, event: !!input.event, addons: input.addons ?? {},
     total: q.total, deposit: q.deposit, paid: 0, status: "requested", source: "web",
   };
+  const id = await insert(booking, "Those dates were just booked. Please pick others.", "We couldn't send your request. Please try again, or call us.");
+  // confirmation to the guest + a copy to the owner (supabase/functions/booking-email)
+  supabase.functions.invoke("booking-email", { body: { id } }).catch(() => {});
+  return { ...booking, id, createdAt: new Date().toISOString() };
+}
+
+/** Insert under a fresh SOTM-XXXXXX id, redrawing on the rare collision. Returns the id. */
+async function insert(booking, takenMsg, failMsg) {
   for (let attempt = 0; attempt < 3; attempt++) {
     const id = newId();
     const { error } = await supabase.from("bookings").insert(toRow({ ...booking, id }));
-    if (!error) {
-      // confirmation to the guest + a copy to the owner (supabase/functions/booking-email)
-      supabase.functions.invoke("booking-email", { body: { id } }).catch(() => {});
-      return { ...booking, id, createdAt: new Date().toISOString() };
-    }
+    if (!error) return id;
     if (error.code === "23505") continue; // id collision: draw again
-    if (error.code === "23P01") throw new Error("Those dates were just booked. Please pick others.");
+    if (error.code === "23P01") throw new Error(takenMsg);
     console.error(error);
-    throw new Error("We couldn't send your request. Please try again, or call us.");
+    throw new Error(failMsg);
   }
-  throw new Error("We couldn't send your request. Please try again, or call us.");
+  throw new Error(failMsg);
 }
 
 // ---- owner (RLS only returns rows to the owner account) -------------------------------------
@@ -101,6 +105,20 @@ export function stopBookings() {
 
 const subscribe = (fn) => (listeners.add(fn), start(), () => listeners.delete(fn));
 export const useBookings = () => useSyncExternalStore(subscribe, () => cache);
+
+/** A booking the team enters by hand (phone, walk-in, Facebook). Total and payment as given. No email sent. */
+export async function createManualBooking(input) {
+  const booking = {
+    package: input.package, checkIn: input.checkIn, checkOut: input.checkOut,
+    guests: input.guests | 0 || 1, kids: input.kids | 0, pets: input.pets | 0, visitors: 0, event: false, addons: {},
+    name: input.name.trim(), phone: input.phone.trim(), email: input.email.trim(), notes: input.notes.trim(),
+    total: input.total | 0, deposit: Math.round((input.total | 0) / 2), paid: input.paid | 0,
+    status: input.status, source: "manual",
+  };
+  const id = await insert(booking, "Those dates are already booked for that stay.", "That booking didn't save. Check the details and your connection.");
+  load();
+  return id;
+}
 
 /** Optimistic: the dashboard updates at once, and rolls back to the server's copy if the save fails. */
 export async function updateBooking(id, patch) {
