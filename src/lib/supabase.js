@@ -8,5 +8,3 @@ const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 // Missing keys take down booking and the dashboard, not the whole site.
 export const supabase = url && key ? createClient(url, key) : null;
 if (!supabase) console.error("Supabase is not configured: copy .env.example to .env.local and fill it in.");
-
-export const OWNER_EMAIL = "sermononthemount.ph@gmail.com";

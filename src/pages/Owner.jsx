@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { CalendarDays, ExternalLink, HandCoins, LayoutGrid, ListChecks, LogOut, Receipt, Users } from "lucide-react";
+import { CalendarDays, ExternalLink, HandCoins, KeyRound, LayoutGrid, ListChecks, LogOut, Receipt, Users } from "lucide-react";
 import Overview from "@/components/owner/Overview";
 import BookingsTable from "@/components/owner/BookingsTable";
 import OwnerCalendar from "@/components/owner/OwnerCalendar";
@@ -8,45 +8,55 @@ import BookingDrawer from "@/components/owner/BookingDrawer";
 import StaffTab from "@/components/owner/StaffTab";
 import ExpensesTab from "@/components/owner/ExpensesTab";
 import PayrollTab from "@/components/owner/PayrollTab";
+import AccountsTab from "@/components/owner/AccountsTab";
 import OwnerSignIn from "@/components/owner/OwnerSignIn";
 import { fmtDate, today } from "@/components/owner/ui";
 import { Link } from "@/lib/router";
 import { stopBookings, updateBooking, useBookings } from "@/lib/bookings";
 import { stopRecords } from "@/lib/records";
-import { OWNER_EMAIL, supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
-// The owners' side, over the live Supabase bookings (lib/bookings.js): a guest's request on /book
-// shows up here straight away. Only the owner account gets in, and the database enforces it too.
-const TABS = [
+// The team's side, over the live Supabase bookings (lib/bookings.js): a guest's request on /book
+// shows up here straight away. Two roles (migration 0004): admins see every tab, staff only
+// bookings and the calendar. The database enforces the same split, this just hides the tabs.
+const ALL_TABS = [
   ["overview", "Overview", LayoutGrid],
   ["bookings", "Bookings", ListChecks],
   ["calendar", "Calendar", CalendarDays],
   ["staff", "Staff", Users],
   ["expenses", "Expenses", Receipt],
   ["payroll", "Payroll", HandCoins],
+  ["accounts", "Accounts", KeyRound],
 ];
+const STAFF_TABS = ["bookings", "calendar"];
 
 export default function Owner() {
-  const [session, setSession] = useState(undefined); // undefined while checking
+  const [auth, setAuth] = useState(undefined); // undefined while checking, null signed out, else { email, role }
   useEffect(() => {
-    if (!supabase) return setSession(null);
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    if (!supabase) return setAuth(null);
+    let live = true;
+    const check = async (s) => {
+      if (!s) return live && setAuth(null);
+      const { data } = await supabase.rpc("my_role");
+      if (live) setAuth({ email: s.user.email, role: data ?? null });
+    };
+    // deferred: supabase-js can deadlock if the auth callback awaits another call directly
     const { data } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
       if (!s) (stopBookings(), stopRecords());
+      setTimeout(() => check(s));
     });
-    return () => data.subscription.unsubscribe();
+    return () => ((live = false), data.subscription.unsubscribe());
   }, []);
 
-  if (session === undefined) return <div className="min-h-screen bg-pine-deep" />;
-  const email = session?.user?.email;
-  if (email !== OWNER_EMAIL) return <OwnerSignIn wrongAccount={email} />;
-  return <Dashboard />;
+  if (auth === undefined) return <div className="min-h-screen bg-pine-deep" />;
+  if (!auth?.role) return <OwnerSignIn wrongAccount={auth?.email} />;
+  return <Dashboard key={auth.email} {...auth} />;
 }
 
-function Dashboard() {
+function Dashboard({ email, role }) {
+  const TABS = role === "admin" ? ALL_TABS : ALL_TABS.filter(([id]) => STAFF_TABS.includes(id));
   const bookings = useBookings();
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState(TABS[0][0]);
   const [filter, setFilter] = useState("all");
   const [openId, setOpenId] = useState(null);
   const [toast, setToast] = useState(null);
@@ -108,7 +118,7 @@ function Dashboard() {
       <div className="min-w-0 px-4 pb-24 pt-6 sm:px-8 lg:pt-10">
         <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="stamp text-xs text-moss">Owner dashboard</p>
+            <p className="stamp text-xs text-moss">{role === "admin" ? "Admin" : "Staff"} · {email}</p>
             <h1 className="font-display text-4xl font-light text-pine-deep sm:text-5xl">
               {tab === "overview" ? "Good day." : TABS.find((x) => x[0] === tab)[1]}
             </h1>
@@ -139,6 +149,7 @@ function Dashboard() {
             {tab === "staff" && <StaffTab notify={notify} />}
             {tab === "expenses" && <ExpensesTab notify={notify} />}
             {tab === "payroll" && <PayrollTab notify={notify} />}
+            {tab === "accounts" && <AccountsTab me={email} notify={notify} />}
           </motion.div>
         </AnimatePresence>
       </div>

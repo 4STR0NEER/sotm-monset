@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { supabase } from "./supabase.js";
 
-const ORDER = { staff: "name", expenses: "spent_on", payroll: "month", advances: "given_on" };
+const ORDER = { staff: "name", expenses: "spent_on", payroll: "month", advances: "given_on", roles: "created_at" };
 const stores = {};
 
 function store(table) {
@@ -36,6 +36,9 @@ const fail = (error) => {
   console.error(error);
   throw new Error("That change didn't save. Check your connection and try again.");
 };
+
+/** Re-fetch a table now, e.g. after a server-side change realtime may lag on. */
+export const refresh = (table) => store(table).load();
 
 /** Insert (no id) or update (with id). Returns the saved row. */
 export async function saveRow(table, { id, created_at, ...row }) {

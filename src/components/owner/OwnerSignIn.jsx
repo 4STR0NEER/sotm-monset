@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { LogIn } from "lucide-react";
 import { Link } from "@/lib/router";
-import { OWNER_EMAIL, supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
-// Email + password sign-in to the owner's Supabase account (created by hand in Supabase → Auth → Users;
-// sign-ups are off). The database rules (is_owner) are what actually keep everyone else out.
+// Email + password sign-in for admins and staff. Accounts are made by an admin in the Accounts tab
+// (sign-ups are off); the database rules (roles table, migration 0004) keep everyone else out.
 export default function OwnerSignIn({ wrongAccount }) {
-  const [email, setEmail] = useState(OWNER_EMAIL);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [state, setState] = useState(null); // null | "sending" | error message
 
@@ -22,12 +22,12 @@ export default function OwnerSignIn({ wrongAccount }) {
     <main className="grain grid min-h-screen place-items-center bg-pine-deep px-4 text-mist">
       <div className="w-full max-w-sm">
         <span className="logo-mask mb-8 block w-12 text-mist" />
-        <h1 className="font-display text-4xl font-light">Owner dashboard</h1>
+        <h1 className="font-display text-4xl font-light">Dashboard</h1>
         {!supabase ? (
           <p className="mt-4 text-fog/75">The dashboard isn't connected to the database yet.</p>
         ) : wrongAccount ? (
           <>
-            <p className="mt-4 text-fog/75">You're signed in as {wrongAccount}, which can't open the dashboard.</p>
+            <p className="mt-4 text-fog/75">You're signed in as {wrongAccount}, which doesn't have dashboard access. Ask an admin to add you.</p>
             <button onClick={() => supabase.auth.signOut()} className="mt-6 rounded-full bg-lantern px-6 py-3 font-semibold text-night transition-transform duration-150 active:scale-[0.97]">Sign out</button>
           </>
         ) : (
