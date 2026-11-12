@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { CalendarDays, ExternalLink, LayoutGrid, ListChecks, LogOut } from "lucide-react";
+import { CalendarDays, ExternalLink, HandCoins, LayoutGrid, ListChecks, LogOut, Receipt, Users } from "lucide-react";
 import Overview from "@/components/owner/Overview";
 import BookingsTable from "@/components/owner/BookingsTable";
 import OwnerCalendar from "@/components/owner/OwnerCalendar";
 import BookingDrawer from "@/components/owner/BookingDrawer";
+import StaffTab from "@/components/owner/StaffTab";
+import ExpensesTab from "@/components/owner/ExpensesTab";
+import PayrollTab from "@/components/owner/PayrollTab";
 import OwnerSignIn from "@/components/owner/OwnerSignIn";
 import { fmtDate, today } from "@/components/owner/ui";
 import { Link } from "@/lib/router";
 import { stopBookings, updateBooking, useBookings } from "@/lib/bookings";
+import { stopRecords } from "@/lib/records";
 import { OWNER_EMAIL, supabase } from "@/lib/supabase";
 
 // The owners' side, over the live Supabase bookings (lib/bookings.js): a guest's request on /book
@@ -17,6 +21,9 @@ const TABS = [
   ["overview", "Overview", LayoutGrid],
   ["bookings", "Bookings", ListChecks],
   ["calendar", "Calendar", CalendarDays],
+  ["staff", "Staff", Users],
+  ["expenses", "Expenses", Receipt],
+  ["payroll", "Payroll", HandCoins],
 ];
 
 export default function Owner() {
@@ -26,7 +33,7 @@ export default function Owner() {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     const { data } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
-      if (!s) stopBookings();
+      if (!s) (stopBookings(), stopRecords());
     });
     return () => data.subscription.unsubscribe();
   }, []);
@@ -108,9 +115,9 @@ function Dashboard() {
             <p className="mt-1 text-sm text-night/55">{fmtDate(today(), { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</p>
           </div>
           {/* tabs for phones and tablets; the sidebar has them on desktop */}
-          <div className="flex gap-1 rounded-full bg-white/70 p-1 lg:hidden" role="tablist">
+          <div className="-mx-1 flex max-w-full gap-1 overflow-x-auto rounded-full bg-white/70 p-1 lg:hidden" role="tablist">
             {TABS.map(([id, label]) => (
-              <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={`relative rounded-full px-4 py-2 text-sm font-medium ${tab === id ? "text-mist" : "text-night/60"}`}>
+              <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={`relative shrink-0 rounded-full px-4 py-2 text-sm font-medium ${tab === id ? "text-mist" : "text-night/60"}`}>
                 {tab === id && <motion.span layoutId="top-pill" className="absolute inset-0 rounded-full bg-pine" transition={{ type: "spring", bounce: 0, duration: 0.4 }} />}
                 <span className="relative">{label}</span>
               </button>
@@ -129,6 +136,9 @@ function Dashboard() {
             {tab === "overview" && <Overview bookings={bookings} open={setOpenId} goTo={goTo} />}
             {tab === "bookings" && <BookingsTable bookings={bookings} open={setOpenId} filter={filter} setFilter={setFilter} />}
             {tab === "calendar" && <OwnerCalendar bookings={bookings} open={setOpenId} />}
+            {tab === "staff" && <StaffTab notify={notify} />}
+            {tab === "expenses" && <ExpensesTab notify={notify} />}
+            {tab === "payroll" && <PayrollTab notify={notify} />}
           </motion.div>
         </AnimatePresence>
       </div>

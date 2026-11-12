@@ -71,3 +71,9 @@ export function Count({ value, format = (v) => peso(Math.round(v)), duration = 9
   }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
   return <span ref={ref} className="tnum">{format(0)}</span>;
 }
+
+// Shared form styles for the staff, expenses and payroll tabs
+export const FIELD = "w-full rounded-xl border border-night/10 bg-mist/60 px-3.5 py-2.5 text-sm outline-none transition-[border-color] focus:border-pine";
+export const CARD = "rounded-[1.75rem] bg-white/75 p-4 sm:p-6";
+export const PRIMARY = "rounded-full bg-pine px-5 py-2.5 text-sm font-semibold text-mist transition-[background-color,transform] duration-150 hover:bg-pine-deep active:scale-[0.97] disabled:opacity-50";
+export const thisMonth = () => today().slice(0, 7);

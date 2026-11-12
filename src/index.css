@@ -80,3 +80,10 @@ body {
 .faq[open]::details-content { height: auto; }
 .faq .plus { transition: transform 260ms var(--ease-out); }
 .faq[open] .plus { transform: rotate(45deg); }
+
+/* Printing a payslip (owner dashboard): only the slip goes on paper */
+@media print {
+  body * { visibility: hidden; }
+  .payslip, .payslip * { visibility: visible; }
+  .payslip { position: fixed; inset: 0 auto auto 0; width: 100%; box-shadow: none; }
+}
