@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { GripVertical, Pencil, Plus, Trash2, X } from "lucide-react";
 import { CARD, FIELD, PRIMARY } from "./ui";
 import { deleteRow, saveRow, useRows } from "@/lib/records";
 import { DEDUCTIONS, WEEKDAYS } from "@/lib/payroll";
@@ -103,40 +103,98 @@ export default function StaffTab({ notify }) {
         </div>
       </form>
 
-      <div className={`${CARD} overflow-x-auto`}>
-        <table className="w-full min-w-[640px] text-left text-sm">
-          <thead className="text-xs uppercase tracking-wide text-night/45">
-            <tr>
-              <th className="py-3 pl-3 font-medium">Name</th>
-              <th className="font-medium">Designation</th>
-              <th className="font-medium">On call</th>
-              <th className="text-right font-medium">Pay</th>
-              <th><span className="sr-only">Actions</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            {staff.map((s) => (
-              <tr key={s.id} className="border-t border-night/[0.06]">
-                <td className="py-3.5 pl-3">
-                  <p className="font-medium text-night/85">{s.name}</p>
-                  {s.phone && <a href={`tel:${s.phone}`} className="text-xs text-night/45">{s.phone}</a>}
-                </td>
-                <td className="text-night/70">{s.designation || "—"}</td>
-                <td className="text-night/70">{s.on_call.length === 7 ? "Every day" : s.on_call.map((d) => WEEKDAYS[d]).join(", ") || "—"}</td>
-                <td className="tnum text-right text-night/80">
-                  {peso(s.rate)}<span className="text-night/45"> / {s.pay_type === "monthly" ? "month" : "day"}</span>
-                  {Object.keys(s.deductions).length > 0 && <p className="text-xs text-night/45">less {peso(Object.values(s.deductions).reduce((a, b) => a + b, 0))} deductions</p>}
-                </td>
-                <td className="pr-2 text-right">
-                  <button onClick={() => setForm({ ...s, rate: String(s.rate) })} className="rounded-full p-2 text-night/50 hover:bg-night/5 hover:text-night" aria-label={`Edit ${s.name}`}><Pencil size={15} /></button>
-                  <button onClick={() => remove(s)} className="rounded-full p-2 text-night/50 hover:bg-crimson/10 hover:text-crimson" aria-label={`Remove ${s.name}`}><Trash2 size={15} /></button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {staff.length === 0 && <p className="py-16 text-center text-sm text-night/50">No staff yet. Add your first on the left.</p>}
+      <Board staff={staff} edit={(s) => setForm({ ...s, rate: String(s.rate) })} remove={remove} notify={notify} />
+    </div>
+  );
+}
+
+// Designation board: one column per role, drag a card across to re-designate. Columns come from
+// the designations in use plus any the owner adds; empty added columns are kept in this browser.
+const daysLabel = (d) => (d.length === 7 ? "Every day" : d.length ? d.map((x) => WEEKDAYS[x]).join(", ") : "No days set");
+const loadCols = () => { try { return JSON.parse(localStorage.getItem("sotm-roles")) || ROLES.slice(0, 4); } catch { return ROLES.slice(0, 4); } };
+
+function Board({ staff, edit, remove, notify }) {
+  const [extra, setExtra] = useState(loadCols);
+  const [over, setOver] = useState(null);
+  const [adding, setAdding] = useState("");
+  const keep = (list) => { setExtra(list); try { localStorage.setItem("sotm-roles", JSON.stringify(list)); } catch { /* private mode */ } };
+
+  const cols = [...new Set([...extra, ...staff.map((s) => s.designation).filter(Boolean)])];
+  if (staff.some((s) => !s.designation)) cols.unshift("");
+
+  const move = async (id, designation) => {
+    const s = staff.find((x) => x.id === id);
+    if (!s || s.designation === designation) return;
+    try {
+      await saveRow("staff", { id, designation });
+      notify(`${s.name} → ${designation || "Unassigned"}`, () => saveRow("staff", { id, designation: s.designation }).catch((e) => notify(e.message)));
+    } catch (e) {
+      notify(e.message);
+    }
+  };
+
+  const addCol = (e) => {
+    e.preventDefault();
+    const name = adding.trim().slice(0, 80);
+    if (name && !cols.includes(name)) keep([...extra, name]);
+    setAdding("");
+  };
+
+  return (
+    <div className={`${CARD} min-w-0`}>
+      <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
+        {cols.map((col) => {
+          const people = staff.filter((s) => s.designation === col);
+          return (
+            <section
+              key={col || "none"}
+              aria-label={col || "Unassigned"}
+              onDragOver={(e) => (e.preventDefault(), setOver(col))}
+              onDragLeave={() => setOver((o) => (o === col ? null : o))}
+              onDrop={(e) => (e.preventDefault(), setOver(null), move(e.dataTransfer.getData("text/plain"), col))}
+              className={`flex w-60 shrink-0 flex-col rounded-2xl p-2.5 transition-colors ${over === col ? "bg-pine/10 ring-2 ring-pine/40" : "bg-night/[0.04]"}`}
+            >
+              <header className="mb-2 flex items-center justify-between px-1.5">
+                <h3 className="text-sm font-semibold text-night/80">{col || "Unassigned"} <span className="tnum font-normal text-night/40">{people.length}</span></h3>
+                {col && !people.length && extra.includes(col) && (
+                  <button onClick={() => keep(extra.filter((x) => x !== col))} className="rounded-full p-1 text-night/40 hover:text-crimson" aria-label={`Remove ${col} column`}><X size={14} /></button>
+                )}
+              </header>
+              <div className="flex min-h-16 flex-col gap-2">
+                {people.map((s) => (
+                  <article
+                    key={s.id}
+                    draggable
+                    onDragStart={(e) => (e.dataTransfer.setData("text/plain", s.id), (e.dataTransfer.effectAllowed = "move"))}
+                    className="group cursor-grab rounded-xl bg-white p-3 shadow-sm ring-1 ring-night/[0.06] active:cursor-grabbing"
+                  >
+                    <div className="flex items-start gap-1.5">
+                      <GripVertical size={14} className="mt-0.5 shrink-0 text-night/25" aria-hidden="true" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium text-night/85">{s.name}</p>
+                        <p className="text-xs text-night/55">{daysLabel(s.on_call)}</p>
+                        <p className="tnum mt-1 text-xs text-night/45">{peso(s.rate)} / {s.pay_type === "monthly" ? "month" : "day"}</p>
+                      </div>
+                      <div className="flex shrink-0 opacity-60 transition-opacity group-hover:opacity-100">
+                        <button onClick={() => edit(s)} className="rounded-full p-1.5 text-night/60 hover:bg-night/5 hover:text-night" aria-label={`Edit ${s.name}`}><Pencil size={13} /></button>
+                        <button onClick={() => remove(s)} className="rounded-full p-1.5 text-night/60 hover:bg-crimson/10 hover:text-crimson" aria-label={`Remove ${s.name}`}><Trash2 size={13} /></button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+                {!people.length && <p className="rounded-xl border border-dashed border-night/15 p-3 text-center text-xs text-night/40">Drop staff here</p>}
+              </div>
+            </section>
+          );
+        })}
+        <form onSubmit={addCol} className="w-52 shrink-0 self-start rounded-2xl border border-dashed border-night/15 p-2.5">
+          <label className="flex items-center gap-1.5">
+            <Plus size={15} className="text-night/40" aria-hidden="true" />
+            <input value={adding} onChange={(e) => setAdding(e.target.value)} placeholder="Add designation" aria-label="New designation column" className="w-full bg-transparent py-1 text-sm outline-none" />
+          </label>
+        </form>
       </div>
+      {staff.length === 0 && <p className="pt-4 text-center text-sm text-night/50">No staff yet. Add your first with the form.</p>}
     </div>
   );
 }

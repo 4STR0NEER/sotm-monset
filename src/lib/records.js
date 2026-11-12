@@ -39,10 +39,12 @@ const fail = (error) => {
 
 /** Insert (no id) or update (with id). Returns the saved row. */
 export async function saveRow(table, { id, created_at, ...row }) {
+  const s = store(table);
+  if (id) (s.rows = s.rows.map((r) => (r.id === id ? { ...r, ...row } : r))), s.emit(); // optimistic
   const q = id ? supabase.from(table).update(row).eq("id", id) : supabase.from(table).insert(row);
   const { data, error } = await q.select().single();
-  if (error) fail(error);
-  store(table).load();
+  if (error) (s.load(), fail(error));
+  s.load();
   return data;
 }
 
