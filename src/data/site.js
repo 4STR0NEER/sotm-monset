@@ -276,19 +276,19 @@ export const REVIEWS = [
   { name: "Myles Ysalina", text: "We had our 3D-2N stay here with office staff." },
 ];
 
-// Short answers only: the full rules live on /terms.
+// Short answers only: the full rules live on /terms. [question, answer, photo shown while it's open]
 export const FAQ = [
-  ["What are the check-in and check-out times?", "Check-in is 2pm, check-out 11am. Early check-in (from 8am) or late check-out (until 5pm) can be arranged for a fee, if the dates allow."],
-  ["How do the stays work?", "There are three, each fully private to one group. The Cabin Lodge (10–40 guests) has the pool and sauna; the Upper Room Chalet (10–15) has the hot tub; the Treehouse is a hideaway for 2–5 that books the whole resort, every amenity included. Lodge and Chalet groups can't use each other's place."],
-  ["How much is the Treehouse?", "₱6,000 a night for two, plus ₱1,000 per extra guest, up to five guests (₱9,000 for five). The whole resort is yours: pool, sauna, hot tub and kitchen."],
-  ["How do we reserve?", "Reservations only, first come, first served. A 50% deposit holds your date and the balance is due a few days before you arrive. Deposits aren't refunded, but you can rebook."],
-  ["Is food included?", "No, we're self-catering: bring your own and cook in the full kitchen, with no corkage fee. You can also pre-order Balamban lechon (₱10,000, delivered), party trays or all-day breakfast (₱240)."],
-  ["What should we pack?", "Towels (or rent ours at ₱75), toothbrushes, sweaters for the cold, and proper swimwear: no cotton, denim or wool in the pool or hot tub. Shampoo, conditioner, body soap and hair dryers are provided."],
-  ["Is there signal or WiFi?", "There's no phone signal on the Transcentral Highway. Our vendo WiFi handles chats, video calls and YouTube: ₱10 per gadget for 7 hours."],
-  ["Can friends visit us?", "Yes, if you tell us ahead. Visitors count as day users at ₱500 each, leave a valid ID at the gate, and head home by 8pm."],
-  ["Are pets allowed?", "Cats and dogs in diapers are welcome. There's a cleaning fee of ₱700 for overnight stays and ₱500 for day users."],
-  ["How are children counted?", "Children aged 1–7 who share a bed with their parents are not counted. Children 8 and above count as guests."],
-  ["Is there aircon?", "Fans only. We're over 800 metres above sea level, so the air is cool all year."],
+  ["What are the check-in and check-out times?", "Check-in is 2pm, check-out 11am. Early check-in (from 8am) or late check-out (until 5pm) can be arranged for a fee, if the dates allow.", "/img/balcony-sunrise.webp"],
+  ["How do the stays work?", "There are three, each fully private to one group. The Cabin Lodge (10–40 guests) has the pool and sauna; the Upper Room Chalet (10–15) has the hot tub; the Treehouse is a hideaway for 2–5 that books the whole resort, every amenity included. Lodge and Chalet groups can't use each other's place.", "/img/mountainviewroombedswithview.webp"],
+  ["How much is the Treehouse?", "₱6,000 a night for two, plus ₱1,000 per extra guest, up to five guests (₱9,000 for five). The whole resort is yours: pool, sauna, hot tub and kitchen.", "/img/treehouse-balcony.webp"],
+  ["How do we reserve?", "Reservations only, first come, first served. A 50% deposit holds your date and the balance is due a few days before you arrive. Deposits aren't refunded, but you can rebook.", "/img/viewing-deck-twilight-view.webp"],
+  ["Is food included?", "No, we're self-catering: bring your own and cook in the full kitchen, with no corkage fee. You can also pre-order Balamban lechon (₱10,000, delivered), party trays or all-day breakfast (₱240).", "/img/kitchen-table-view.webp"],
+  ["What should we pack?", "Towels (or rent ours at ₱75), toothbrushes, sweaters for the cold, and proper swimwear: no cotton, denim or wool in the pool or hot tub. Shampoo, conditioner, body soap and hair dryers are provided.", "/img/pool-view-2.webp"],
+  ["Is there signal or WiFi?", "There's no phone signal on the Transcentral Highway. Our vendo WiFi handles chats, video calls and YouTube: ₱10 per gadget for 7 hours.", "/img/mt-manunggalmountainrange.webp"],
+  ["Can friends visit us?", "Yes, if you tell us ahead. Visitors count as day users at ₱500 each, leave a valid ID at the gate, and head home by 8pm.", "/img/wooddeckactivity.webp"],
+  ["Are pets allowed?", "Cats and dogs in diapers are welcome. There's a cleaning fee of ₱700 for overnight stays and ₱500 for day users.", "/img/dogwithmt-mannungalbackground.webp"],
+  ["How are children counted?", "Children aged 1–7 who share a bed with their parents are not counted. Children 8 and above count as guests.", "/img/wooddeckhangingchairs.webp"],
+  ["Is there aircon?", "Fans only. We're over 800 metres above sea level, so the air is cool all year.", "/img/balcony-fog.webp"],
 ];
 
 export const peso = (n) => "₱" + n.toLocaleString("en-PH");
