@@ -40,6 +40,7 @@ const HEAD = [
   ["meta", { name: "apple-mobile-web-app-title", content: "SOTM" }],
   ["meta", { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" }],
 ];
+navigator.serviceWorker?.register("/sw.js"); // opens offline once installed (public/sw.js)
 let installEvent = null; // Chrome/Edge hand this over once the app is installable
 addEventListener("beforeinstallprompt", (e) => (e.preventDefault(), (installEvent = e), dispatchEvent(new Event("sotm-installable"))));
 

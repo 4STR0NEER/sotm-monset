@@ -86,6 +86,9 @@ writeFileSync("dist/_headers", `https://dashboard.sotmretreatresort.com/*
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
+/sw.js
+  Cache-Control: no-cache
+
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
