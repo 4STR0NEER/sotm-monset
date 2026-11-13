@@ -2,6 +2,7 @@ import { useState } from "react";
 import { LogIn } from "lucide-react";
 import { Link } from "@/lib/router";
 import { supabase } from "@/lib/supabase";
+import Install from "./Install";
 
 // Email + password sign-in for admins and staff. Accounts are made by an admin in the Accounts tab
 // (sign-ups are off); the database rules (roles table, migration 0004) keep everyone else out.
@@ -52,6 +53,7 @@ export default function OwnerSignIn({ wrongAccount }) {
             {state && state !== "sending" && <p role="alert" className="mt-3 text-sm text-lantern">{state}</p>}
           </form>
         )}
+        <Install label="Install the dashboard on this device" className="mt-6 w-full justify-center rounded-full border border-mist/20 px-6 py-3 text-sm font-semibold text-mist transition-colors hover:border-lantern hover:text-lantern" />
         <Link to="/" className="mt-10 inline-block text-sm text-fog/55 hover:text-mist">← Back to the website</Link>
       </div>
     </main>

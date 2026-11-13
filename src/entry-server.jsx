@@ -6,9 +6,11 @@ import { renderToString } from "react-dom/server";
 import { MotionConfig } from "motion/react";
 import App from "./App";
 import { setServerPath } from "./lib/router";
+import { preload } from "./lib/routes";
 
-export function render(path) {
+export async function render(path) {
   setServerPath(path);
+  await preload(path); // renderToString can't wait for a lazy page
   return renderToString(
     <StrictMode>
       <MotionConfig reducedMotion="user">
@@ -18,4 +20,4 @@ export function render(path) {
   );
 }
 
-export { PAGES, NOT_FOUND, SITE, jsonLd, llmsTxt } from "./data/seo";
+export { PAGES, NOT_FOUND, SITE, jsonLd, llmsTxt, stayAt } from "./data/seo";

@@ -40,6 +40,7 @@ export const EXTRA_HEAD = 1000; // per guest above a tier
 export const STAYS = {
   lodge: {
     id: "lodge",
+    slug: "cabin-lodge", // its page: /cabin-lodge (pages/Stay.jsx)
     name: "Cabin Lodge",
     blurb: "A rustic countryside lodge for big families and barkadas, with the ridge of Mt. Manunggal outside every window.",
     guests: [10, 40], // the owner quotes 10–35 but publishes a 40-guest rate
@@ -64,6 +65,7 @@ export const STAYS = {
   },
   chalet: {
     id: "chalet",
+    slug: "upper-room-chalet",
     name: "Upper Room Chalet",
     blurb: "A European, alpine–medieval chalet for smaller groups, with a hot tub looking straight out at the mountains.",
     guests: [10, 15],
@@ -82,6 +84,7 @@ export const STAYS = {
   },
   treehouse: {
     id: "treehouse",
+    slug: "treehouse",
     name: "Treehouse",
     blurb: "A hideaway for two to five with the whole resort to yourselves: pool, sauna, hot tub and kitchen, plus driftwood bunks and a balcony table over the valley.",
     guests: [2, 5],
@@ -281,13 +284,16 @@ export const FAQ = [
   ["What are the check-in and check-out times?", "Check-in is 2pm, check-out 11am. Early check-in (from 8am) or late check-out (until 5pm) can be arranged for a fee, if the dates allow.", "/img/balcony-sunrise.webp"],
   ["How do the stays work?", "There are three, each fully private to one group. The Cabin Lodge (10–40 guests) has the pool and sauna; the Upper Room Chalet (10–15) has the hot tub; the Treehouse is a hideaway for 2–5 that books the whole resort, every amenity included. Lodge and Chalet groups can't use each other's place.", "/img/mountainviewroombedswithview.webp"],
   ["How much is the Treehouse?", "₱6,000 a night for two, plus ₱1,000 per extra guest, up to five guests (₱9,000 for five). The whole resort is yours: pool, sauna, hot tub and kitchen.", "/img/treehouse-balcony.webp"],
+  ["How do we get there?", "By car, about 1 hr 15 min (35 km) from Cebu City: take the Cebu Transcentral Highway up through Busay towards Balamban. There's no phone signal on the highway, so save the map offline before you leave.", "/img/walkwayview.webp"],
   ["How do we reserve?", "Reservations only, first come, first served. A 50% deposit holds your date and the balance is due a few days before you arrive. Deposits aren't refunded, but you can rebook.", "/img/viewing-deck-twilight-view.webp"],
   ["Is food included?", "No, we're self-catering: bring your own and cook in the full kitchen, with no corkage fee. You can also pre-order Balamban lechon (₱10,000, delivered), party trays or all-day breakfast (₱240).", "/img/kitchen-table-view.webp"],
   ["What should we pack?", "Towels (or rent ours at ₱75), toothbrushes, sweaters for the cold, and proper swimwear: no cotton, denim or wool in the pool or hot tub. Shampoo, conditioner, body soap and hair dryers are provided.", "/img/pool-view-2.webp"],
   ["Is there signal or WiFi?", "There's no phone signal on the Transcentral Highway. Our vendo WiFi handles chats, video calls and YouTube: ₱10 per gadget for 7 hours.", "/img/mt-manunggalmountainrange.webp"],
   ["Can friends visit us?", "Yes, if you tell us ahead. Visitors count as day users at ₱500 each, leave a valid ID at the gate, and head home by 8pm.", "/img/wooddeckactivity.webp"],
+  ["Can we hold a company outing or retreat?", "Yes. Offices book the Cabin Lodge (up to 40) for outings, planning sessions and Christmas parties. Add a guided Mountain Reflection Session or a yoga session (₱2,000 each), a bonfire night or Balamban lechon.", "/img/wooddeck.webp"],
   ["Are pets allowed?", "Cats and dogs in diapers are welcome. There's a cleaning fee of ₱700 for overnight stays and ₱500 for day users.", "/img/dogwithmt-mannungalbackground.webp"],
   ["How are children counted?", "Children aged 1–7 who share a bed with their parents are not counted. Children 8 and above count as guests.", "/img/wooddeckhangingchairs.webp"],
+  ["How cold does it get?", "Cool all year at 816 m, and colder at night and when the fog rolls in. Bring a sweater or jacket, especially from November to February.", "/img/mountain-view-2.webp"],
   ["Is there aircon?", "Fans only. We're over 800 metres above sea level, so the air is cool all year.", "/img/balcony-fog.webp"],
 ];
 

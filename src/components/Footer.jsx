@@ -1,5 +1,5 @@
 import { Link } from "@/lib/router";
-import { RESORT } from "@/data/site";
+import { RESORT, STAYS } from "@/data/site";
 
 export default function Footer() {
   return (
@@ -15,7 +15,7 @@ export default function Footer() {
             <p><a href={RESORT.phoneHref} className="hover:text-mist">{RESORT.phone}</a> · {RESORT.hours}</p>
           </div>
           <nav className="flex flex-wrap gap-x-6 gap-y-2" aria-label="Footer">
-            <Link to="/#rooms" className="hover:text-mist">Rooms</Link>
+            {Object.values(STAYS).map((s) => <Link key={s.id} to={"/" + s.slug} className="hover:text-mist">{s.name}</Link>)}
             <Link to="/#amenities" className="hover:text-mist">Amenities</Link>
             <Link to="/#packages" className="hover:text-mist">Packages</Link>
             <Link to="/#faq" className="hover:text-mist">FAQs</Link>

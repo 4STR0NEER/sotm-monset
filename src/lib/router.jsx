@@ -1,8 +1,9 @@
 import { useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 import { lenis, scrollToTarget } from "./smooth";
+import { preload } from "./routes";
 
-// A tiny router on the History API: three pages don't need a routing library.
+// A tiny router on the History API: a handful of pages don't need a routing library.
 // Every page change runs inside a View Transition (fog blur cross-fade, index.css).
 
 const listeners = new Set();
@@ -39,11 +40,15 @@ export function navigate(to) {
 
 if (typeof window !== "undefined") addEventListener("popstate", () => transition(emit));
 
-// <a> that navigates in-app; modified clicks (new tab etc.) still behave like normal links
+// <a> that navigates in-app; modified clicks (new tab etc.) still behave like normal links.
+// Hover or focus starts fetching the page's file, so it's usually there before the click.
 export function Link({ to, onClick, ...props }) {
+  const warm = () => preload(new URL(to, location.href).pathname);
   return (
     <a
       href={to}
+      onPointerEnter={warm}
+      onFocus={warm}
       onClick={(e) => {
         onClick?.(e);
         if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;

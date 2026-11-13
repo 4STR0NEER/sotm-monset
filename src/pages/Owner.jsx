@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { CalendarDays, Download, Plus, ExternalLink, HandCoins, KeyRound, LayoutGrid, ListChecks, LogOut, Receipt, Users } from "lucide-react";
+import { CalendarDays, Plus, ExternalLink, HandCoins, KeyRound, LayoutGrid, ListChecks, LogOut, Receipt, Users } from "lucide-react";
 import Overview from "@/components/owner/Overview";
 import BookingsTable from "@/components/owner/BookingsTable";
 import OwnerCalendar from "@/components/owner/OwnerCalendar";
@@ -11,9 +11,11 @@ import ExpensesTab from "@/components/owner/ExpensesTab";
 import PayrollTab from "@/components/owner/PayrollTab";
 import AccountsTab from "@/components/owner/AccountsTab";
 import OwnerSignIn from "@/components/owner/OwnerSignIn";
+import Install from "@/components/owner/Install";
 import { fmtDate, today } from "@/components/owner/ui";
 import { Link } from "@/lib/router";
-import { stopBookings, updateBooking, useBookings } from "@/lib/bookings";
+import { stopBookings, updateBooking, useBookings, useBookingsLoaded } from "@/lib/bookings";
+import { DashboardSkeleton, RowsSkeleton } from "@/components/Skeleton";
 import { stopRecords } from "@/lib/records";
 import { supabase } from "@/lib/supabase";
 
@@ -41,25 +43,6 @@ const HEAD = [
   ["meta", { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" }],
 ];
 navigator.serviceWorker?.register("/sw.js"); // opens offline once installed (public/sw.js)
-let installEvent = null; // Chrome/Edge hand this over once the app is installable
-addEventListener("beforeinstallprompt", (e) => (e.preventDefault(), (installEvent = e), dispatchEvent(new Event("sotm-installable"))));
-
-function useInstall() {
-  const [ready, setReady] = useState(!!installEvent);
-  useEffect(() => {
-    const on = () => setReady(true);
-    addEventListener("sotm-installable", on);
-    return () => removeEventListener("sotm-installable", on);
-  }, []);
-  if (!ready) return null;
-  return async () => {
-    installEvent.prompt();
-    await installEvent.userChoice;
-    installEvent = null;
-    setReady(false);
-  };
-}
-
 export default function Owner() {
   useEffect(() => {
     const els = HEAD.map(([tag, attrs]) => document.head.appendChild(Object.assign(document.createElement(tag), attrs)));
@@ -82,15 +65,15 @@ export default function Owner() {
     return () => ((live = false), data.subscription.unsubscribe());
   }, []);
 
-  if (auth === undefined) return <div className="min-h-screen bg-pine-deep" />;
+  if (auth === undefined) return <DashboardSkeleton />;
   if (!auth?.role) return <OwnerSignIn wrongAccount={auth?.email} />;
   return <Dashboard key={auth.email} {...auth} />;
 }
 
 function Dashboard({ email, role }) {
-  const install = useInstall();
   const TABS = role === "admin" ? ALL_TABS : ALL_TABS.filter(([id]) => STAFF_TABS.includes(id));
   const bookings = useBookings();
+  const loaded = useBookingsLoaded();
   const [tab, setTab] = useState(TABS[0][0]);
   const [filter, setFilter] = useState("all");
   const [openId, setOpenId] = useState(null);
@@ -142,11 +125,7 @@ function Dashboard({ email, role }) {
           ))}
         </nav>
         <div className="flex items-center gap-2 lg:mt-auto lg:flex-col lg:items-stretch">
-          {install && (
-            <button onClick={install} className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-lantern hover:text-mist">
-              <Download size={16} /> <span className="hidden sm:inline">Install app</span>
-            </button>
-          )}
+          <Install label="Install" className="rounded-xl px-3 py-2 text-sm font-semibold text-lantern hover:text-mist" pop="right-0 top-full mt-2 lg:left-0 lg:right-auto lg:top-auto lg:bottom-full lg:mb-2 lg:mt-0" />
           <Link to="/" className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-fog/70 hover:text-mist"><ExternalLink size={16} /> <span className="hidden sm:inline">View website</span></Link>
           <button
             onClick={() => supabase.auth.signOut()}
@@ -190,9 +169,11 @@ function Dashboard({ email, role }) {
             exit={{ opacity: 0, y: -6, transition: { duration: 0.12 } }}
             transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
           >
+            {!loaded && ["overview", "bookings", "calendar"].includes(tab) ? <RowsSkeleton /> : <>
             {tab === "overview" && <Overview bookings={bookings} open={setOpenId} goTo={goTo} />}
             {tab === "bookings" && <BookingsTable bookings={bookings} open={setOpenId} filter={filter} setFilter={setFilter} />}
             {tab === "calendar" && <OwnerCalendar bookings={bookings} open={setOpenId} />}
+            </>}
             {tab === "staff" && <StaffTab notify={notify} />}
             {tab === "expenses" && <ExpensesTab notify={notify} />}
             {tab === "payroll" && <PayrollTab notify={notify} />}

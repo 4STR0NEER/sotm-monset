@@ -5,14 +5,12 @@ import { NOT_FOUND, PAGES as META, SITE } from "@/data/seo";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import Home from "@/pages/Home";
-import Book from "@/pages/Book";
-import Terms from "@/pages/Terms";
+import { DashboardSkeleton, PageSkeleton } from "@/components/Skeleton";
+import { clean, isRoute, pageFor } from "@/lib/routes";
 
 // split out so website visitors never download the dashboard
 const Owner = lazy(() => import("@/pages/Owner"));
 const isDashboardHost = typeof location !== "undefined" && location.hostname.startsWith("dashboard.");
-
-const PAGES = { "/": Home, "/book": Book, "/terms": Terms };
 
 function NotFound() {
   return (
@@ -43,20 +41,23 @@ function useHead(path, known) {
 }
 
 export default function App() {
-  const raw = usePath();
-  const path = raw.length > 1 ? raw.replace(/\/+$/, "") : raw;
+  const path = clean(usePath());
   const dashboard = isDashboardHost || path === "/owner";
   useEffect(initSmooth, []);
-  useHead(path, !dashboard && path in PAGES);
+  const known = path === "/" || isRoute(path);
+  useHead(path, !dashboard && known);
   // the owner dashboard is its own app shell: no website nav or footer.
   // dashboard.<domain> serves it at every path; /owner keeps working on the main site.
-  if (dashboard) return <Suspense fallback={null}><Owner /></Suspense>;
-  const Page = PAGES[path] ?? NotFound;
+  if (dashboard) return <Suspense fallback={<DashboardSkeleton />}><Owner /></Suspense>;
+  // the home page ships in the main file; every other page is its own (lib/routes.js)
+  const Page = path === "/" ? Home : known ? pageFor(path) : NotFound;
   return (
     <>
       <Nav />
       <main>
-        <Page />
+        <Suspense fallback={<PageSkeleton />}>
+          <Page />
+        </Suspense>
       </main>
       <Footer />
     </>

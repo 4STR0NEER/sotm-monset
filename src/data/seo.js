@@ -9,12 +9,12 @@ export const PAGES = {
   "/": {
     title: "Sermon on the Mount · Private Mountain Resort in Balamban, Cebu",
     description:
-      "An exclusive mountain retreat 816 m up in Balamban, Cebu, 1 hr 15 min from Cebu City. Cabin Lodge for 10–40, Upper Room Chalet for 10–15, Treehouse for 2–5. Pool, sauna and hot tub.",
+      "Private mountain resort 816 m up in Balamban, Cebu, 1 hr 15 min from Cebu City. Treehouse, Cabin Lodge and Upper Room Chalet, with pool, sauna and hot tub.",
   },
   "/book": {
     title: "Book Your Stay · Rates & Open Dates · Sermon on the Mount",
     description:
-      "See open dates and book the Cabin Lodge or Upper Room Chalet (from ₱14,500 a night), the Treehouse (from ₱6,000), day use (from ₱4,500) or an intimate wedding in Balamban, Cebu.",
+      "Live open dates and prices: day use from ₱4,500, Treehouse from ₱6,000, Cabin Lodge and Upper Room Chalet from ₱14,500 a night. Balamban, Cebu.",
   },
   "/terms": {
     title: "Terms, Deposits & House Rules · Sermon on the Mount Resort",
@@ -22,6 +22,24 @@ export const PAGES = {
       "Deposits, cancellations, rebooking, pets, visitors and house rules for Sermon on the Mount Retreat Resort in Balamban, Cebu.",
   },
 };
+// One page per stay (pages/Stay.jsx), at /<slug>
+const STAY_META = {
+  treehouse: {
+    title: "Treehouse Stay in Balamban, Cebu · Sermon on the Mount",
+    description: "A treehouse for 2–5 that books the whole private resort: pool, sauna, hot tub and kitchen. ₱6,000 a night for two, 816 m up in Balamban, Cebu.",
+  },
+  lodge: {
+    title: "Cabin Lodge for 10–40 in Balamban, Cebu · Sermon on the Mount",
+    description: "A private countryside lodge for 10–40 with its own pool, sauna and kitchen, facing Mt. Manunggal. From ₱14,500 a night, 1 hr 15 min from Cebu City.",
+  },
+  chalet: {
+    title: "Upper Room Chalet with Hot Tub, Balamban · Sermon on the Mount",
+    description: "An alpine-style private chalet for 10–15 with a 6-seat hot tub facing the mountains. From ₱14,500 a night in Balamban, Cebu, 816 m above sea level.",
+  },
+};
+for (const s of Object.values(STAYS)) PAGES["/" + s.slug] = STAY_META[s.id];
+export const stayAt = (path) => Object.values(STAYS).find((s) => "/" + s.slug === path);
+
 export const NOT_FOUND = { title: "Page not found · Sermon on the Mount", description: PAGES["/"].description };
 
 const ID = `${SITE}/#resort`;
@@ -64,6 +82,7 @@ const resort = () => ({
   containsPlace: Object.values(STAYS).map((s) => ({
     "@type": "Accommodation",
     "@id": `${SITE}/#${s.id}`,
+    url: `${SITE}/${s.slug}`,
     name: s.name,
     description: s.blurb,
     occupancy: { "@type": "QuantitativeValue", minValue: s.guests[0], maxValue: s.guests[1] },
@@ -106,6 +125,16 @@ const faqPage = () => ({
 export function jsonLd(path) {
   const graph = [resort(), website()];
   if (path === "/") graph.push(faqPage());
+  const stay = stayAt(path);
+  if (stay)
+    graph.push({
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: `${SITE}/` },
+        { "@type": "ListItem", position: 2, name: "Stays", item: `${SITE}/#rooms` },
+        { "@type": "ListItem", position: 3, name: stay.name, item: `${SITE}${path}` },
+      ],
+    });
   return { "@context": "https://schema.org", "@graph": graph };
 }
 
@@ -142,6 +171,7 @@ ${FAQ.map(([q, a]) => `- ${q} ${a}`).join("\n")}
 
 ## Pages
 - [Home](${SITE}/): the resort, stays, amenities, packages, reviews, FAQ and directions
+${Object.values(STAYS).map((s) => `- [${s.name}](${SITE}/${s.slug}): photos, rates for every group size, what's included`).join("\n")}
 - [Book](${SITE}/book): live availability and prices for every stay and package
 - [Terms & Conditions](${SITE}/terms): deposits, cancellations, rebooking and house rules
 `;

@@ -77,6 +77,7 @@ async function insert(booking, takenMsg, failMsg) {
 // ---- owner (RLS only returns rows to the owner account) -------------------------------------
 
 let cache = [];
+let loaded = false; // false until the first fetch lands: the dashboard shows skeleton rows meanwhile
 let channel = null;
 const listeners = new Set();
 const emit = () => listeners.forEach((fn) => fn());
@@ -85,6 +86,7 @@ async function load() {
   const { data, error } = await supabase.from("bookings").select("*").order("check_in");
   if (error) return console.error(error);
   cache = data.map(fromRow);
+  loaded = true;
   emit();
 }
 
@@ -100,11 +102,13 @@ export function stopBookings() {
   if (channel) supabase.removeChannel(channel);
   channel = null;
   cache = [];
+  loaded = false;
   emit();
 }
 
 const subscribe = (fn) => (listeners.add(fn), start(), () => listeners.delete(fn));
 export const useBookings = () => useSyncExternalStore(subscribe, () => cache);
+export const useBookingsLoaded = () => useSyncExternalStore(subscribe, () => loaded);
 
 /** A booking the team enters by hand (phone, walk-in, Facebook). Total and payment as given. No email sent. */
 export async function createManualBooking(input) {

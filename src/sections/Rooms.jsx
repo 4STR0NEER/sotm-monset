@@ -66,6 +66,9 @@ export default function Rooms() {
                 <Link to={`/book?package=${id}`} className="rounded-full bg-lantern px-6 py-3 font-semibold text-night transition-transform duration-150 ease-[var(--ease-out)] active:scale-[0.97]">
                   Book the {stay.name}
                 </Link>
+                <Link to={"/" + stay.slug} className="text-sm font-medium text-fog/85 underline decoration-mist/30 underline-offset-4 hover:decoration-mist">
+                  See the {stay.name}
+                </Link>
                 <span className="text-sm text-fog/60">From {peso(nightlyRate(id, stay.guests[0]))} a night for {stay.guests[0]}</span>
               </div>
             </motion.div>

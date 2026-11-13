@@ -6,5 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   // "@/..." is the import style Kokonut and Skiper components expect
+  // dist/.vite/manifest.json: lets scripts/prerender.mjs preload each page's own file
+  build: { manifest: true },
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
 });
