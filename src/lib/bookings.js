@@ -114,7 +114,7 @@ export const useBookingsLoaded = () => useSyncExternalStore(subscribe, () => loa
 export async function createManualBooking(input) {
   const booking = {
     package: input.package, checkIn: input.checkIn, checkOut: input.checkOut,
-    guests: input.guests | 0 || 1, kids: input.kids | 0, pets: input.pets | 0, visitors: 0, event: false, addons: {},
+    guests: input.guests | 0 || 1, kids: input.kids | 0, pets: input.pets | 0, visitors: input.visitors | 0, event: false, addons: {},
     name: input.name.trim(), phone: input.phone.trim(), email: input.email.trim(), notes: input.notes.trim(),
     total: input.total | 0, deposit: Math.round((input.total | 0) / 2), paid: input.paid | 0,
     status: input.status, source: "manual",
@@ -131,6 +131,8 @@ export async function updateBooking(id, patch) {
   const { error } = await supabase.from("bookings").update(toRow(patch)).eq("id", id);
   if (error) {
     load();
+    if (error.code === "23P01") throw new Error("Those dates are already booked.");
+    if (error.code === "42501") throw new Error("Only admins can change the stay, dates or guest details.");
     throw new Error("That change didn't save. Check your connection and try again.");
   }
 }

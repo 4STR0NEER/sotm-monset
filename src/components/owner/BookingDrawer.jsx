@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { CalendarDays, Mail, PawPrint, Phone, Users, X } from "lucide-react";
+import { CalendarDays, Mail, PawPrint, Pencil, Phone, UserPlus, Users, X } from "lucide-react";
 import { PKG, StatusBadge, fmtDate, nightsOf, today } from "./ui";
 import { peso } from "@/data/site";
 
@@ -29,7 +29,8 @@ const BTN = {
   danger: "text-crimson hover:bg-crimson/10",
 };
 
-export default function BookingDrawer({ booking: b, onClose, act }) {
+// `edit` opens the booking form: everything for admins, walk-ins and payment for staff.
+export default function BookingDrawer({ booking: b, onClose, act, edit, admin }) {
   useEffect(() => {
     if (!b) return;
     const esc = (e) => e.key === "Escape" && onClose();
@@ -74,6 +75,13 @@ export default function BookingDrawer({ booking: b, onClose, act }) {
             <div className="flex-1 space-y-7 p-6">
               <div className="flex items-center justify-between">
                 <StatusBadge status={b.status} />
+                {b.status !== "cancelled" && (
+                  <button onClick={() => edit(b)} className="inline-flex items-center gap-1.5 rounded-full border border-night/15 px-3.5 py-1.5 text-xs font-semibold text-night/80 transition-[border-color,transform] duration-150 hover:border-pine hover:text-pine active:scale-[0.97]">
+                    {admin ? <><Pencil size={14} aria-hidden="true" /> Edit</> : <><UserPlus size={14} aria-hidden="true" /> Add walk-ins</>}
+                  </button>
+                )}
+              </div>
+              <div className="-mt-5 text-right">
                 <span className="text-xs text-night/45">Requested {fmtDate(b.createdAt.slice(0, 10), { month: "short", day: "numeric", year: "numeric" })} · {{ web: "website", manual: "added in dashboard" }[b.source] ?? b.source}</span>
               </div>
 

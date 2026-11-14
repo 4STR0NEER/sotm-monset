@@ -18,6 +18,7 @@ import { stopBookings, updateBooking, useBookings, useBookingsLoaded } from "@/l
 import { DashboardSkeleton, RowsSkeleton } from "@/components/Skeleton";
 import { stopRecords } from "@/lib/records";
 import { supabase } from "@/lib/supabase";
+import { peso } from "@/data/site";
 
 // The team's side, over the live Supabase bookings (lib/bookings.js): a guest's request on /book
 // shows up here straight away. Two roles (migration 0004): admins see every tab, staff only
@@ -91,7 +92,8 @@ function Dashboard({ email, role }) {
   const [filter, setFilter] = useState("all");
   const [openId, setOpenId] = useState(null);
   const [adding, setAdding] = useState(false);
-  const closeAdd = useCallback(() => setAdding(false), []);
+  const [editing, setEditing] = useState(null); // booking being edited in the form
+  const closeAdd = useCallback(() => (setAdding(false), setEditing(null)), []);
   const [toast, setToast] = useState(null);
   const timer = useRef();
   const opened = bookings.find((b) => b.id === openId) ?? null;
@@ -195,11 +197,14 @@ function Dashboard({ email, role }) {
         </AnimatePresence>
       </div>
 
-      <BookingDrawer booking={opened} onClose={close} act={act} />
+      <BookingDrawer booking={opened} onClose={close} act={act} admin={role === "admin"} edit={(b) => (setEditing(b), setAdding(true))} />
       <NewBooking
         open={adding}
+        booking={editing}
+        admin={role === "admin"}
         onClose={closeAdd}
         bookings={bookings}
+        onSaved={(b, diff) => (closeAdd(), notify(`${b.name}'s booking saved${diff ? ` · total ${diff > 0 ? "+" : "−"}${peso(Math.abs(diff))}` : ""}`))}
         onCreated={(id, name) => (setAdding(false), setOpenId(id), notify(`Booking for ${name} added · ${id}`))}
       />
 
