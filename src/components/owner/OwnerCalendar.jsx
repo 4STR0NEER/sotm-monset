@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { PKG, fmtDate, today } from "./ui";
 import { addMonths, daysInMonth, monthKey, occupancy } from "@/lib/stats";
 import { unitOf } from "@/lib/pricing";
@@ -9,7 +9,8 @@ import { unitOf } from "@/lib/pricing";
 // (so colour is never the only cue). Requested bookings are hatched and outlined, not solid.
 const WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-export default function OwnerCalendar({ bookings, open }) {
+// Tapping a free day from today on opens New booking with that check-in (`add`).
+export default function OwnerCalendar({ bookings, open, add }) {
   const [key, setKey] = useState(monthKey(today()));
   const [dir, setDir] = useState(1);
   const t = today();
@@ -18,8 +19,8 @@ export default function OwnerCalendar({ bookings, open }) {
   const first = new Date(key + "-01T00:00:00Z");
   const lead = (first.getUTCDay() + 6) % 7;
   const days = Array.from({ length: daysInMonth(key) }, (_, i) => `${key}-${String(i + 1).padStart(2, "0")}`);
-  // Every live booking on each day: the Lodge and the Chalet can both be taken on one date,
-  // even by the same party. Lodge-side bookings first, so each day's chips keep a stable order.
+  // Every live booking on each day. Each booking takes the whole resort, so a day normally has one;
+  // older bookings from before that rule can still overlap. Lodge-side first for a stable order.
   const byDay = new Map();
   const live = bookings.filter((b) => b.status !== "cancelled").sort((a, b) => (unitOf(a.package) === "lodge" ? 0 : 1) - (unitOf(b.package) === "lodge" ? 0 : 1));
   for (const b of live) {
@@ -44,6 +45,7 @@ export default function OwnerCalendar({ bookings, open }) {
           ))}
           <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full border border-night/40" style={{ backgroundImage: "repeating-linear-gradient(45deg,#0d171255 0 1px,transparent 1px 3px)" }} />Requested</span>
           <span className="tnum font-medium text-night/80">{occ}% occupied</span>
+          <span className="w-full text-night/45 sm:w-auto">Tap a free day to add a booking</span>
         </div>
       </div>
 
@@ -64,6 +66,17 @@ export default function OwnerCalendar({ bookings, open }) {
           {days.map((iso) => {
             const list = byDay.get(iso) ?? [];
             const day = fmtDate(iso, { weekday: "long", month: "long", day: "numeric" });
+            if (!list.length && iso >= t) return (
+              <button
+                key={iso}
+                onClick={() => add(iso)}
+                aria-label={`${day}: free. Add a booking`}
+                className="group flex min-h-20 min-w-0 flex-col rounded-xl border border-night/[0.06] p-1.5 text-left transition-[background-color,border-color,transform] duration-150 ease-[var(--ease-out)] hover:border-pine/40 hover:bg-pine/[0.04] active:scale-[0.97] sm:min-h-24 sm:p-2"
+              >
+                <span className={`tnum text-xs ${iso === t ? "grid size-6 place-items-center rounded-full bg-night font-semibold text-mist" : "text-night/60"}`}>{+iso.slice(8)}</span>
+                <Plus size={16} className="m-auto text-pine opacity-30 transition-opacity group-hover:opacity-100" aria-hidden="true" />
+              </button>
+            );
             return (
               <div
                 key={iso}

@@ -55,7 +55,9 @@ export default function Owner() {
     let live = true;
     // A failed lookup (phone just woke, no signal yet) keeps the last known role instead of
     // showing "no access". The database still checks the role on every read and write.
-    const check = async (s) => {
+    // Nothing remembered yet (signed in before this existed)? Keep the loading screen and try again
+    // every 3 seconds until the phone has signal, rather than ever showing "no access" by mistake.
+    const check = async (s, tries = 0) => {
       if (!s) return live && setAuth(null);
       const key = "sotm-role:" + s.user.id;
       const { data, error } = await supabase.rpc("my_role");
@@ -65,6 +67,7 @@ export default function Owner() {
         else if (role) localStorage.setItem(key, role);
         else localStorage.removeItem(key);
       } catch {}
+      if (error && !role && tries < 40) return live && setTimeout(() => check(s, tries + 1), 3000);
       if (live) setAuth({ email: s.user.email, role });
     };
     // deferred: supabase-js can deadlock if the auth callback awaits another call directly
@@ -182,7 +185,7 @@ function Dashboard({ email, role }) {
             {!loaded && ["overview", "bookings", "calendar"].includes(tab) ? <RowsSkeleton /> : <>
             {tab === "overview" && <Overview bookings={bookings} open={setOpenId} goTo={goTo} />}
             {tab === "bookings" && <BookingsTable bookings={bookings} open={setOpenId} filter={filter} setFilter={setFilter} />}
-            {tab === "calendar" && <OwnerCalendar bookings={bookings} open={setOpenId} />}
+            {tab === "calendar" && <OwnerCalendar bookings={bookings} open={setOpenId} add={setAdding} />}
             </>}
             {tab === "staff" && <StaffTab notify={notify} />}
             {tab === "expenses" && <ExpensesTab notify={notify} />}

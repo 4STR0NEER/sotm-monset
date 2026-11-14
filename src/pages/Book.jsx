@@ -300,7 +300,7 @@ export default function Book() {
               </AnimatePresence>
             </Step>
 
-            <Step n={2} title="Pick your dates" hint={stay ? `Hatched nights are taken. The ${STAYS[pkgId].name} goes to one group at a time.` : "Hatched days are already taken."}>
+            <Step n={2} title="Pick your dates" hint={stay ? `Hatched nights are taken. Every booking has the whole resort to itself.` : "Hatched days are already taken."}>
               <StayPicker
                 key={pkgId}
                 month={thisMonth()}

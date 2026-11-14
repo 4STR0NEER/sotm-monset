@@ -9,6 +9,9 @@ const FILTERS = [["all", "All"], ["requested", "Requested"], ["upcoming", "Upcom
 
 export default function BookingsTable({ bookings, open, filter, setFilter }) {
   const [q, setQ] = useState("");
+  const [stays, setStays] = useState([]); // stay chips switched on; none = every stay
+  const toggle = (id) => setStays((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const byStay = (b) => !stays.length || stays.includes(b.package);
   const body = useRef(null);
   const t = today();
 
@@ -20,16 +23,17 @@ export default function BookingsTable({ bookings, open, filter, setFilter }) {
   const needle = q.trim().toLowerCase();
   const rows = bookings
     .filter(match)
+    .filter(byStay)
     .filter((b) => !needle || `${b.name} ${b.id} ${b.phone}`.toLowerCase().includes(needle))
     .sort((a, b) => (filter === "completed" || filter === "cancelled" ? b.checkIn.localeCompare(a.checkIn) : a.checkIn.localeCompare(b.checkIn)));
-  const count = (f) => bookings.filter((b) => (f === "all" ? true : f === "upcoming" ? b.status === "confirmed" && b.checkOut > t : f === "completed" ? b.status === "completed" || (b.status === "confirmed" && b.checkOut <= t) : b.status === f)).length;
+  const count = (f) => bookings.filter(byStay).filter((b) => (f === "all" ? true : f === "upcoming" ? b.status === "confirmed" && b.checkOut > t : f === "completed" ? b.status === "completed" || (b.status === "confirmed" && b.checkOut <= t) : b.status === f)).length;
 
   // rows ripple in whenever the filter changes (anime.js)
   useEffect(() => {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches || !body.current) return;
     const a = animate(body.current.querySelectorAll("tr"), { opacity: [0, 1], x: [-8, 0], duration: 420, delay: stagger(25, { start: 40 }), ease: "out(4)" });
     return () => a.revert();
-  }, [filter]);
+  }, [filter, stays]);
 
   return (
     <div className="rounded-[1.75rem] bg-white/75 p-4 sm:p-6">
@@ -60,6 +64,27 @@ export default function BookingsTable({ bookings, open, filter, setFilter }) {
         </label>
       </div>
 
+      {/* stay chips: tap to show only those stays; colours match the calendar */}
+      <div className="-mx-1 mb-4 flex flex-wrap gap-2 px-1" role="group" aria-label="Filter by stay">
+        {Object.entries(PKG).map(([id, p]) => {
+          const on = stays.includes(id);
+          const n = bookings.filter((b) => b.package === id && match(b)).length;
+          return (
+            <button
+              key={id}
+              aria-pressed={on}
+              onClick={() => toggle(id)}
+              className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-[background-color,border-color,color,transform] duration-150 ease-[var(--ease-out)] active:scale-[0.97]"
+              style={on ? { background: p.color, borderColor: p.color, color: "#fff" } : { borderColor: `${p.color}55`, background: `${p.color}12`, color: "rgb(13 23 18 / 0.75)" }}
+            >
+              <span className="size-2 rounded-full" style={{ background: on ? "#fff" : p.color }} aria-hidden="true" />
+              {p.label} <span className="tnum opacity-70">{n}</span>
+            </button>
+          );
+        })}
+        {stays.length > 0 && <button onClick={() => setStays([])} className="px-2 text-xs font-medium text-pine underline underline-offset-4">Show all stays</button>}
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="text-xs uppercase tracking-wide text-night/45">
@@ -72,7 +97,7 @@ export default function BookingsTable({ bookings, open, filter, setFilter }) {
               <th className="pl-6 font-medium">Status</th>
             </tr>
           </thead>
-          <tbody ref={body} key={filter}>
+          <tbody ref={body} key={filter + stays.join()}>
             {rows.map((b) => (
               <tr
                 key={b.id}
@@ -102,7 +127,7 @@ export default function BookingsTable({ bookings, open, filter, setFilter }) {
             ))}
           </tbody>
         </table>
-        {rows.length === 0 && <p className="py-16 text-center text-sm text-night/50">No bookings match{needle ? ` “${q}”` : ""}.</p>}
+        {rows.length === 0 && <p className="py-16 text-center text-sm text-night/50">No bookings match{needle ? ` “${q}”` : ""}{stays.length ? " for those stays" : ""}.</p>}
       </div>
     </div>
   );

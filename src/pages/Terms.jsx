@@ -89,7 +89,7 @@ const SECTIONS = [
     id: "cancellation",
     title: "Cancellation and rebooking",
     body: [
-      "We are a small resort with only one group per accommodation per day, so we rely on the reservations you make. Once you reserve a date it is considered sold and we turn other guests away. Late cancellations and no-shows really affect us.",
+      "We are a small resort with only one group at the resort per day, so we rely on the reservations you make. Once you reserve a date it is considered sold and we turn other guests away. Late cancellations and no-shows really affect us.",
       "Cancellations are not refunded, but you may rebook for a charge, depending on how far ahead you tell us (see the table above). The same applies to day use bookings.",
       "Rebooking depends on availability. The rate at the time of rebooking applies and any difference is collected. You must rebook within 6 months of telling us about the cancellation; after that, rebooking can't be accepted.",
       "No-shows and shortened stays get no refund and no rebooking.",

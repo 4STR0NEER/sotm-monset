@@ -8,18 +8,19 @@ import { peso } from "@/data/site";
 
 const PHONE = /^(\+?63|0)9\d{9}$/;
 const plusDays = (iso, n) => new Date(Date.parse(iso) + n * 864e5).toISOString().slice(0, 10);
-const blank = () => ({
-  package: "lodge", checkIn: today(), checkOut: plusDays(today(), 1), guests: 10, kids: 0, pets: 0,
+const blank = (day = today()) => ({
+  package: "lodge", checkIn: day, checkOut: plusDays(day, 1), guests: 10, kids: 0, pets: 0,
   name: "", phone: "", email: "", notes: "", status: "confirmed", total: null, paid: 0,
 });
 
+// `open` is true, or a date (YYYY-MM-DD) when opened by tapping a free day on the calendar.
 // Phone, walk-in or Facebook bookings, entered by admin or staff. Price starts from the same
 // pricing as the website and can be overridden; the database still refuses double bookings.
 export default function NewBooking({ open, onClose, onCreated, bookings }) {
   const [f, setF] = useState(blank);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
-  useEffect(() => { if (open) (setF(blank()), setError(null)); }, [open]);
+  useEffect(() => { if (open) (setF(blank(typeof open === "string" ? open : undefined)), setError(null)); }, [open]);
   useEffect(() => {
     if (!open) return;
     const esc = (e) => e.key === "Escape" && onClose();

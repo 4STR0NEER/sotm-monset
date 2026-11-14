@@ -29,7 +29,7 @@ export default function Exclusive() {
                 Once booked, <em>your place</em> is yours alone.
               </h2>
               <p className="mx-auto mt-6 max-w-sm text-fog/75">
-                A lodge with a pool and sauna, a chalet with a hot tub, a treehouse for two to five, each to one group at a time. No walk-ins.
+                A lodge with a pool and sauna, a chalet with a hot tub, a treehouse for two to five, and only one group at the resort each night. No walk-ins.
               </p>
             </div>
           </div>

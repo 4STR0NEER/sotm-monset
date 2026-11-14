@@ -5,6 +5,8 @@ import RevenueChart from "./RevenueChart";
 import { cn } from "@/lib/utils";
 import { Count, PKG, PayState, PkgTag, fmtDate, today } from "./ui";
 import { addMonths, mix, money, monthKey, occupancy, revenueByMonth } from "@/lib/stats";
+import { useRows } from "@/lib/records";
+import { peso } from "@/data/site";
 
 function Card({ children, className = "" }) {
   return <div data-card className={cn("rounded-[1.75rem] bg-white/75 p-6 shadow-[0_1px_0_rgb(13_23_18/0.04)]", className)}>{children}</div>;
@@ -17,6 +19,15 @@ export default function Overview({ bookings, open, goTo }) {
   const thisMonth = bookings.filter((b) => monthKey(b.checkIn) === now && b.status !== "cancelled");
   const rev = revenueByMonth(bookings, Array.from({ length: 9 }, (_, i) => addMonths(now, i - 5)));
   const m = money(bookings);
+  // Gross: confirmed and completed bookings checking in this month. Net: gross less this month's
+  // expenses and payroll (gross pay, before deductions). Admin-only tab, so the cost tables are readable.
+  const expenses = useRows("expenses");
+  const payroll = useRows("payroll");
+  const gross = thisMonth.filter((b) => b.status !== "requested").reduce((s, b) => s + (b.total || 0), 0);
+  const pending = thisMonth.filter((b) => b.status === "requested").reduce((s, b) => s + (b.total || 0), 0);
+  const spent = expenses.filter((e) => e.spent_on.startsWith(now)).reduce((s, e) => s + e.amount, 0);
+  const wages = payroll.filter((p) => p.month === now).reduce((s, p) => s + (p.gross || p.amount), 0);
+  const net = gross - spent - wages;
   const occ = occupancy(bookings, now);
   const occNext = occupancy(bookings, addMonths(now, 1));
   const requests = bookings.filter((b) => b.status === "requested").sort((a, b) => a.checkIn.localeCompare(b.checkIn));
@@ -34,7 +45,8 @@ export default function Overview({ bookings, open, goTo }) {
   }, []);
 
   const kpis = [
-    ["Booked this month", <Count value={thisMonth.reduce((s, b) => s + (b.total || 0), 0)} />, `${thisMonth.length} bookings in ${fmtDate(t, { month: "long" })}`],
+    [`Gross · ${fmtDate(t, { month: "long" })}`, <Count value={gross} />, pending ? `+${peso(pending)} in requests not yet confirmed` : `${thisMonth.length} bookings this month`],
+    [`Net · ${fmtDate(t, { month: "long" })}`, <Count value={net} format={(v) => (v < 0 ? "−" : "") + peso(Math.abs(Math.round(v)))} />, `After ${peso(spent)} expenses and ${peso(wages)} payroll`],
     ["Collected", <Count value={m.collected} />, "Deposits and full payments received"],
     ["Balance due", <Count value={m.outstanding} />, "On confirmed bookings"],
     ["Occupancy", <Count value={occ * 100} format={(v) => `${Math.round(v)}%`} />, `${Math.round(occNext * 100)}% booked next month`],
@@ -42,9 +54,9 @@ export default function Overview({ bookings, open, goTo }) {
 
   return (
     <div ref={root} className="space-y-5">
-      <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 xl:grid-cols-5">
         {kpis.map(([label, value, sub]) => (
-          <Card key={label} className="p-4 sm:p-6">
+          <Card key={label} className="p-4 last:col-span-2 sm:p-6 sm:last:col-span-1">
             <p className="text-sm text-night/55">{label}</p>
             <p className="mt-2 font-display text-[clamp(1.35rem,5.4vw,2.25rem)] font-light leading-tight text-pine-deep">{value}</p>
             <p className="mt-1 text-xs text-night/45">{sub}</p>

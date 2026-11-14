@@ -31,8 +31,8 @@ export const STORY = {
   verse: { text: "Blessed are those who mourn, for they will be comforted.", ref: "Matthew 5:4" }, // painted on the room wall
 };
 
-// Three private stays, each to one group at a time. Lodge and Chalet can host two groups on the same
-// night, who can't use each other's pool, sauna or hot tub. A Treehouse booking takes the whole resort. Rate tiers: 10 and 15 guests at both, 24/30/40 at the Cabin Lodge only.
+// Three private stays. Every booking makes the whole resort exclusive: one group on the property a night.
+// Rate tiers: 10 and 15 guests at both, 24/30/40 at the Cabin Lodge only.
 // The Treehouse has a flat rate instead (`rate`, for its minimum guests) plus EXTRA_HEAD per extra guest.
 export const RATE_TIERS = [[10, 14500], [15, 19500], [24, 29000], [30, 35000], [40, 45000]];
 export const EXTRA_HEAD = 1000; // per guest above a tier
@@ -48,6 +48,7 @@ export const STAYS = {
       ["Guests", "10 – 40"],
       ["Rooms", "2 rooms, 48 m² each"],
       ["Soak", "Pool and sauna"],
+      ["Exclusive", "No other guests at the resort that night"],
       ["Beds", "4 queen beds + 4 single bunks per room"],
       ["Bath", "2 toilets, 2 hot & cold showers"],
       ["Cooling", "Fans only. At 816 m, you won't need aircon"],
@@ -72,6 +73,7 @@ export const STAYS = {
     specs: [
       ["Guests", "10 – 15"],
       ["Soak", "6-seat round hot tub with jacuzzi"],
+      ["Exclusive", "No other guests at the resort that night"],
       ["Bath", "Hot & cold showers"],
       ["Cooling", "Fans only. At 816 m, you won't need aircon"],
     ],
@@ -282,7 +284,7 @@ export const REVIEWS = [
 // Short answers only: the full rules live on /terms. [question, answer, photo shown while it's open]
 export const FAQ = [
   ["What are the check-in and check-out times?", "Check-in is 2pm, check-out 11am. Early check-in (from 8am) or late check-out (until 5pm) can be arranged for a fee, if the dates allow.", "/img/balcony-sunrise.webp"],
-  ["How do the stays work?", "There are three, each fully private to one group. The Cabin Lodge (10–40 guests) has the pool and sauna; the Upper Room Chalet (10–15) has the hot tub; the Treehouse is a hideaway for 2–5 that books the whole resort, every amenity included. Lodge and Chalet groups can't use each other's place.", "/img/mountainviewroombedswithview.webp"],
+  ["How do the stays work?", "There are three, each fully private to one group. The Cabin Lodge (10–40 guests) has the pool and sauna; the Upper Room Chalet (10–15) has the hot tub; the Treehouse is a hideaway for 2–5 that books the whole resort, every amenity included. Whichever you book, yours is the only group at the resort that night.", "/img/mountainviewroombedswithview.webp"],
   ["How much is the Treehouse?", "₱6,000 a night for two, plus ₱1,000 per extra guest, up to five guests (₱9,000 for five). The whole resort is yours: pool, sauna, hot tub and kitchen.", "/img/treehouse-balcony.webp"],
   ["How do we get there?", "By car, about 1 hr 15 min (35 km) from Cebu City: take the Cebu Transcentral Highway up through Busay towards Balamban. There's no phone signal on the highway, so save the map offline before you leave.", "/img/walkwayview.webp"],
   ["How do we reserve?", "Reservations only, first come, first served. A 50% deposit holds your date and the balance is due a few days before you arrive. Deposits aren't refunded, but you can rebook.", "/img/viewing-deck-twilight-view.webp"],

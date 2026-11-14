@@ -24,6 +24,7 @@ const INCLUDED = {
     "View deck, videoke and forest trails to the creek",
   ],
   lodge: [
+    "No other guests at the resort that night",
     "Pool and sauna, for your group only",
     "Full kitchen with charcoal BBQ, free LPG and mineral water",
     "Videoke right by the pool",
@@ -31,6 +32,7 @@ const INCLUDED = {
     "Shampoo, conditioner, body soap and hair dryers",
   ],
   chalet: [
+    "No other guests at the resort that night",
     "6-seat round hot tub with jacuzzi",
     "Vaulted great room with a long table and kitchen",
     "Loft lounge under the A-frame roof",

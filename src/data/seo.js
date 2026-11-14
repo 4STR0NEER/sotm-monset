@@ -148,7 +148,7 @@ export function llmsTxt() {
   const extras = ADDONS.map((a) => `- ${a.name}: ${peso(a.price)} per ${a.per === "group" ? "group" : a.unit}. ${a.note}.`);
   return `# ${RESORT.name}
 
-> A private mountain retreat resort ${RESORT.altitude} m above sea level on the Cebu Transcentral Highway in Balamban, Cebu, Philippines, overlooking Mt. Manunggal. About ${RESORT.kmFromCity} km (${RESORT.driveFromCity}) from Cebu City. Each stay is booked by one group at a time. Reservations only, no walk-ins. Open since ${RESORT.opened}.
+> A private mountain retreat resort ${RESORT.altitude} m above sea level on the Cebu Transcentral Highway in Balamban, Cebu, Philippines, overlooking Mt. Manunggal. About ${RESORT.kmFromCity} km (${RESORT.driveFromCity}) from Cebu City. Every booking makes the whole resort exclusive: one group a night. Reservations only, no walk-ins. Open since ${RESORT.opened}.
 
 ## Stays (per night)
 ${stays.join("\n")}

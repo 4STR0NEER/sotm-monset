@@ -44,7 +44,6 @@ assert.equal(quote({ package: "birthday", checkIn: "2026-11-09" }).onRequest, tr
 assert.equal(quote({ package: "chalet", guests: 15, pets: 2 }).lines.length, 0);
 
 // The Treehouse books the whole resort; Lodge and Chalet can share a night
-assert.ok(clashes("treehouse", "lodge") && clashes("chalet", "treehouse") && clashes("lodge", "lodge"));
-assert.ok(!clashes("lodge", "chalet"));
+assert.ok(clashes("treehouse", "lodge") && clashes("chalet", "treehouse") && clashes("lodge", "lodge") && clashes("lodge", "chalet") && clashes("dayuse", "chalet"));
 
 console.log("pricing ok");
