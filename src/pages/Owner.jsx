@@ -43,6 +43,7 @@ const HEAD = [
   ["meta", { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" }],
 ];
 navigator.serviceWorker?.register("/sw.js"); // opens offline once installed (public/sw.js)
+navigator.storage?.persist?.(); // ask the browser not to clear the saved sign-in when space runs low
 export default function Owner() {
   useEffect(() => {
     const els = HEAD.map(([tag, attrs]) => document.head.appendChild(Object.assign(document.createElement(tag), attrs)));
@@ -52,10 +53,19 @@ export default function Owner() {
   useEffect(() => {
     if (!supabase) return setAuth(null);
     let live = true;
+    // A failed lookup (phone just woke, no signal yet) keeps the last known role instead of
+    // showing "no access". The database still checks the role on every read and write.
     const check = async (s) => {
       if (!s) return live && setAuth(null);
-      const { data } = await supabase.rpc("my_role");
-      if (live) setAuth({ email: s.user.email, role: data ?? null });
+      const key = "sotm-role:" + s.user.id;
+      const { data, error } = await supabase.rpc("my_role");
+      let role = data ?? null;
+      try {
+        if (error) role = localStorage.getItem(key);
+        else if (role) localStorage.setItem(key, role);
+        else localStorage.removeItem(key);
+      } catch {}
+      if (live) setAuth({ email: s.user.email, role });
     };
     // deferred: supabase-js can deadlock if the auth callback awaits another call directly
     const { data } = supabase.auth.onAuthStateChange((_event, s) => {

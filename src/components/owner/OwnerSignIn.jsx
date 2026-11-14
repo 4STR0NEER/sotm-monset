@@ -6,6 +6,12 @@ import Install from "./Install";
 
 // Email + password sign-in for admins and staff. Accounts are made by an admin in the Accounts tab
 // (sign-ups are off); the database rules (roles table, migration 0004) keep everyone else out.
+// Facebook/Messenger/Instagram's built-in browsers wipe storage between visits, so the sign-in never sticks.
+const ua = navigator.userAgent;
+const inApp = /FBAN|FBAV|FB_IAB|Messenger|Instagram|Line\//.test(ua);
+const ios = /iPhone|iPad|iPod/.test(ua);
+const standalone = navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
+
 export default function OwnerSignIn({ wrongAccount }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,6 +58,15 @@ export default function OwnerSignIn({ wrongAccount }) {
             </button>
             {state && state !== "sending" && <p role="alert" className="mt-3 text-sm text-lantern">{state}</p>}
           </form>
+        )}
+        {inApp ? (
+          <p role="alert" className="mt-6 rounded-2xl bg-lantern/15 p-4 text-sm text-fog/85">
+            You opened this inside Facebook or Messenger, which forgets your sign-in every time.{" "}
+            {ios && <a href={`x-safari-${location.href}`} className="font-semibold text-lantern underline underline-offset-4">Open in Safari</a>}
+            {ios ? ", then install it to your Home Screen." : " Open it in Chrome instead, then install it."}
+          </p>
+        ) : ios && !standalone && (
+          <p className="mt-6 text-sm text-fog/70">On iPhone, install the dashboard to your Home Screen to stay signed in. Safari tabs (especially Private ones) can forget it.</p>
         )}
         <Install label="Install the dashboard on this device" className="mt-6 w-full justify-center rounded-full border border-mist/20 px-6 py-3 text-sm font-semibold text-mist transition-colors hover:border-lantern hover:text-lantern" />
         <Link to="/" className="mt-10 inline-block text-sm text-fog/55 hover:text-mist">← Back to the website</Link>
